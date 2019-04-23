@@ -1,4 +1,5 @@
 import sys
+
 prd_ser = 419485
 max_loop = 20
 x = 7
@@ -55,7 +56,7 @@ def f_shuffle_r(ar_number,snum,x_idx,y):
     return ar_number
 
 
-def get_cord(tmp_page):
+def getCord(tmp_page):
     cnt = 0
     ar_number = [[None for i in range(y)] for j in range(x)]
     for i in range(y):
@@ -87,7 +88,7 @@ def get_cord(tmp_page):
         num = i + 1
         seed = int(tmp_page)+prd_ser
         if seed % max_loop == 0:
-            seed = abs(tmp_page-prd_ser)+(max_loop+1)
+            seed = abs(int(tmp_page)-prd_ser)+(max_loop+1)
 
         k = int((num*seed+int(tmp_page)/max_loop) % max_loop)
         for j in range(k-1, -1, -1):
@@ -103,9 +104,10 @@ def get_cord(tmp_page):
             ar_didx[number] = [None]*2
             ar_didx[number][0] = d_stx
             ar_didx[number][1] = d_sty
-    print(ar_didx)
+    return ar_didx
 
 if __name__ == "__main__":
     tmp_page = sys.argv[1]
 
-    get_cord(tmp_page)
+    didx = getCord(tmp_page)
+    print(didx)

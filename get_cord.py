@@ -1,11 +1,10 @@
 import sys
 
-prd_ser = 419485
+
 max_loop = 20
 x = 7
 y = 7
-diff_w = 4
-diff_h = 3
+
 width = 120
 height = 171
 def f_shuffle_r(ar_number,snum,x_idx,y):
@@ -56,7 +55,9 @@ def f_shuffle_r(ar_number,snum,x_idx,y):
     return ar_number
 
 
-def getCord(tmp_page):
+def getCord(tmp_page, prd_ser, o_height, o_width):
+    diff_w = o_width%x
+    diff_h = o_height%y
     cnt = 0
     ar_number = [[None for i in range(y)] for j in range(x)]
     for i in range(y):
@@ -86,9 +87,9 @@ def getCord(tmp_page):
             ar_number[j][i] = ar_tmp[j]
     for i in range(x):
         num = i + 1
-        seed = int(tmp_page)+prd_ser
+        seed = int(tmp_page)+int(prd_ser)
         if seed % max_loop == 0:
-            seed = abs(int(tmp_page)-prd_ser)+(max_loop+1)
+            seed = abs(int(tmp_page)-int(prd_ser))+(max_loop+1)
 
         k = int((num*seed+int(tmp_page)/max_loop) % max_loop)
         for j in range(k-1, -1, -1):
@@ -105,9 +106,3 @@ def getCord(tmp_page):
             ar_didx[number][0] = d_stx
             ar_didx[number][1] = d_sty
     return ar_didx
-
-if __name__ == "__main__":
-    tmp_page = sys.argv[1]
-
-    didx = getCord(tmp_page)
-    print(didx)

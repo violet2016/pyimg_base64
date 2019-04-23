@@ -1,0 +1,3974 @@
+<html>
+	<title>MEDUSA</title>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="minimal-ui, width=device-width, maximum-scale=1.0, minimum-scale=1.0, initial-scale=1.0, user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	
+	<script type="text/javascript" src="https://img.papy.co.jp/viewer/js/jquery-3.0.0.min.js"></script>
+	<script type="text/javascript" src="https://img.papy.co.jp/viewer/js/nouislider.min.js"></script>
+	<link href="https://img.papy.co.jp/viewer/css/nouislider.min.css" rel="stylesheet">
+	
+	<link href="https://img.papy.co.jp/viewer/img/icon.ico" rel="icon" type="image/png">
+	
+<script type="text/javascript">
+var OpenLR = 1;    		//右開きフラグ(1:右開き)
+var page=88;				//現在のページ
+var page_back = -1;
+var set_page=88;			//栞更新用
+var max_page = 197;		//総ページ数
+var user_id = "6004471";      //ユーザID
+var m_line="";			//目次情報
+var en_flag = 0;		//海外版と日本語版の判別(1:英語版 0:日本語版)
+var cnts_type = "6";	// コンテンツtype
+var url_bookmark = "https://dre-viewer2.papy.co.jp/sc/bookmark/9d1ebbef9fd97d491b/9-419485-84/FIX001/";
+var url_base = "/sc/view_jsimg2/9d1ebbef9fd97d491b/9-419485-84/FIX001/";
+var url_base2 = "https://dre-aka-p.papy.co.jp/filesv/sc/contents/419485/6s/0/";
+var url_base2_papy = "https://dre-papy-f.papy.co.jp/filesv/sc/contents_papy/419485/6s/0/FIX001/";
+var ar_edge = url_base2.split("/");
+var edge = ar_edge[2];
+var rt_id = "FIX001";
+var cache_update = "0";
+var prd_ser = "419485";
+var disp_single = "0";
+var print_flag = "0";
+var viewer_mode = "akamai";
+var auth_key = "auth-key=exp=1556001891~acl=%2Ffilesv%2Fsc%2Fcontents%2F419485%2F6s%2F0%2F%2A~hmac=10ab78f02a0014639be696fc6c17a6ad1f527551a0b2b2b21609508457058f5b";
+var auth_key_papy = "hash=9d1ebbef9fd97d491b";
+var url_jump = "https://renta.papy.co.jp/renta/sc/jump.cgi?prd=9-419485-84";	// 飛び先
+var animation = 'all 0.4s ease-out';
+var m_animation = 'all 0.2s ease-out';
+var no_animation = '';
+var left=0,center=1,right=2;
+var win_w = 0,win_h = 0;		//画面サイズ
+var img_obj = new Array(3);		//1ページ前の画像、現在の画像、次の画像
+var space = new Array(3);		//横の余白
+var t_space = new Array(3);		//縦の余白
+var img_rate = new Array(3);	//各caanvas画像の比率
+var vh_flag = new Array(3);		//各画像の縦長横長フラグ
+var t_flag = 0;					//端末縦横フラグ(0=横,1=縦)
+var t_lock = 0;					//移動ロックフラグ
+var mdown_flg = 0;
+var touch_flag = 0;				//タッチフラグ
+var resizetimer = 0;
+var b_timer;					//bookmark用タイマー
+var pos2 = 0;					//中央画像のx座標
+var pos2_y = 0;					//中央画像のy座標
+var pos1_y = 0;					//左画像のy座標
+var pos3_y = 0;					//右画像のy座標
+var rt_zoom = 1;				//拡大率
+var ss_x=0,sm_x=0,ss_y=0,sm_y=0;//移動座標
+var ss_t = 0,sm_t = 0;			//時間
+var onload_flag = 0;
+var dist_all = 0;
+var wheel_move = 0;
+var keydown_move = 0;
+var lock_move = 0;									//x or y方向ロック
+var img_vw = 0;	var img_vh = 0;						//拡縮時の画像サイズ
+//set_init時の各画像配置完了フラグ
+var t0=0,t1=0,t2=0;
+var max_data_len = 20;
+var ar_load_data = new Array(max_data_len);
+var ar_load_data_number = new Array(max_data_len);
+var now_load_pos = 0;
+var load_lock = 0;
+var update_lock = 0;
+
+// preload用オブジェクト
+var pre2_xhr = new XMLHttpRequest();
+var pre_xhr = new XMLHttpRequest();
+// 汎用
+var update_xhr = new XMLHttpRequest();
+// bookmark用オブジェクト
+var set_xhr = new XMLHttpRequest();
+// contents用オブジェクト
+var data_xhr = new Array(3);
+for( var i=0; i<3; i++ ){
+	data_xhr[i] = new Array(2);
+	data_xhr[i][0] = new XMLHttpRequest();
+	data_xhr[i][1] = new XMLHttpRequest();
+}
+var ua = window.navigator.userAgent.toLowerCase();	//useragent(小文字で)
+var server_name = location.hostname;
+var domain = ".papy.co.jp";
+if( server_name.search(/.ebookbank.jp/) != -1 ){
+	domain = ".ebookbank.jp";
+}
+
+if( location.protocol == 'https:' ){
+	server_name = "s_"+server_name;
+}
+
+// adjust時のずれ修正用
+var left_pos = 0;
+var right_pos = 0;
+var now_cursor = "";
+var padding_top = 0;
+var bar_h = 0;
+
+var sukasi_canvas = new Array(6);
+var sukasi_ctx = new Array(6);
+
+var ie_flag = 0;
+if (navigator.userAgent.search("MSIE") != -1){ 
+	ie_flag = 1;
+}
+else if(navigator.userAgent.search("Edge") != -1){
+	ie_flag = 1;
+}
+else if(navigator.userAgent.search("rv:11") != -1){
+	ie_flag = 1;
+}
+
+// リサイズ判定
+window.onresize = function(){
+	if( onload_flag == 1 ){ return; }
+	if(resizetimer){
+        clearTimeout(resizetimer);
+    }
+	resizetimer = setTimeout(function(){
+		// サイズが変化するので先読みデータは初期化
+		ar_load_data = null;
+		ar_load_data_number = null;
+		ar_load_data = new Array(max_data_len);
+		ar_load_data_number = new Array(max_data_len);
+		load_lock = 0;
+		now_load_pos = 0;
+		
+		var load_obj = document.getElementById("loading_block");
+		load_obj.style.display = "block";
+		var lh = load_obj.offsetHeight;
+		var lw = load_obj.offsetWidth;	
+		load_obj.style.top = (Math.ceil(window.innerHeight) - lh)/2 + "px";
+		load_obj.style.left = (Math.ceil(window.innerWidth) - lw)/2 + "px";				
+		set_init();
+	}, 200);
+}
+
+// 一定間隔処理
+window.setInterval(function(){	
+	// set_init時各画像の配置完了フラグ
+	if( t0 == 1 && t1 == 1 && t2 == 1 ){	
+		t0 = 0; t1 = 0; t2 = 0;
+		adjust_init();
+	}
+	
+	if( page_back == -1 ){
+		document.getElementById("btn_back").className = "btn_back_hidden";
+	}
+	else{
+		document.getElementById("btn_back").className = "btn_back_visible";
+	}
+},200);
+
+// 読込時はここからスタート
+window.onload = on_init;
+function on_init(){
+	
+	var win_rt = 0;
+	// WindowsRT対応 -> サイズ限界値を超えていた場合は単ページ表示に切り替え
+	if( ua.indexOf("arm;") != -1 ){
+		if( ua.indexOf("msie") != -1 || ua.indexOf("trident/") ){
+			chk_size();
+			win_rt = 1;
+		}
+	}
+
+	onload_flag = 1;
+	if( !window.opener ){
+	}
+	else{
+		//windowサイズ調整(下メニューにコンテンツが被るケースがある)
+		window.resizeTo( window.outerWidth, window.outerHeight );
+		window.moveTo( 0, 0 );
+	}
+	
+	if( en_flag == "1" ){
+		document.getElementById("loading").innerHTML = "Now Loading...<br>Please wait";
+	}
+	
+	var load_obj = document.getElementById("loading_block");
+	var lh = load_obj.offsetHeight;
+	var lw = load_obj.offsetWidth;	
+	load_obj.style.top = (Math.ceil(window.innerHeight) - lh)/2 + "px";
+	load_obj.style.left = (Math.ceil(window.innerWidth) - lw)/2 + "px";		
+	load_obj.style.visibility = "visible";
+
+	// sliderの設定、イベント定義
+	var direct = "rtl";
+	if( OpenLR == 0 ){	direct = "ltr";	}
+	var Slider = document.getElementById('slider');
+	noUiSlider.create(Slider, {
+		start: 0,
+		direction: direct,
+		connect: 'lower',
+		step: 1,
+		range: {
+			'min': 0,
+			'max': max_page
+		}
+	});
+	Slider.noUiSlider.on('update', function ( values, handle ) {
+		if ( handle == 0 ) {
+			document.getElementById('slider_value').innerHTML = parseInt(values[handle]) + "/" + max_page;
+		}
+	});
+	Slider.noUiSlider.on('change', function ( values, handle ) {
+		if ( handle == 0 ) {
+			var load_obj = document.getElementById("loading_block");
+			load_obj.style.display = "block";
+			var lh = load_obj.offsetHeight;
+			var lw = load_obj.offsetWidth;	
+			load_obj.style.top = (Math.ceil(window.innerHeight) - lh)/2 + "px";
+			load_obj.style.left = (Math.ceil(window.innerWidth) - lw)/2 + "px";		
+			setTimeout(function(){
+				page_back = page;
+				page = parseInt(values[handle]);
+				set_init();
+			},100);
+		}
+	});
+	
+	// 描画関数へ
+	if( win_rt == 0 ){
+		setTimeout(function(){
+			set_init();
+		},200);
+	}
+	
+	// 主要なイベント定義
+	var view_obj = document.getElementById('view');	
+	if( window.navigator.msPointerEnabled ){
+		// IE系のイベント(タッチ、マウス)
+		view_obj.addEventListener("MSPointerDown", touch_start, true);
+		view_obj.addEventListener("MSPointerMove", touch_move, true);
+		view_obj.addEventListener("MSPointerUp", touch_end, true);
+		view_obj.addEventListener("MSPointerOut", touch_end, true);
+		
+		view_obj = document.getElementById('side_right');
+		view_obj.addEventListener("MSPointerDown", touch_start, true);
+		view_obj.addEventListener("MSPointerMove", touch_move, true);
+		view_obj.addEventListener("MSPointerUp", touch_end, true);
+		view_obj.addEventListener("MSPointerOut", touch_end, true);
+
+		view_obj = document.getElementById('side_left');
+		view_obj.addEventListener("MSPointerDown", touch_start, true);
+		view_obj.addEventListener("MSPointerMove", touch_move, true);
+		view_obj.addEventListener("MSPointerUp", touch_end, true);
+		view_obj.addEventListener("MSPointerOut", touch_end, true);
+	}
+	else{
+		if (('createTouch' in document) || ('ontouchstart' in document)){
+			// タッチイベント
+			view_obj.addEventListener("touchstart", touch_start, true);
+			view_obj.addEventListener("touchmove", touch_move, true);
+			view_obj.addEventListener("touchend", touch_end, true);
+			
+			view_obj = document.getElementById('side_right');
+			view_obj.addEventListener("touchstart", touch_start, true);
+			view_obj.addEventListener("touchmove", touch_move, true);
+			view_obj.addEventListener("touchend", touch_end, true);
+
+			view_obj = document.getElementById('side_left');
+			view_obj.addEventListener("touchstart", touch_start, true);
+			view_obj.addEventListener("touchmove", touch_move, true);
+			view_obj.addEventListener("touchend", touch_end, true);	
+		}
+		else{
+			// マウスイベント
+			view_obj.addEventListener("mousedown", f_mdown, true);
+			view_obj.addEventListener("mousemove", f_mmove, true);
+			view_obj.addEventListener("mouseout", f_mout, true);
+			view_obj.addEventListener("mouseup", f_mup, true);
+			
+			view_obj = document.getElementById('side_right');
+			view_obj.addEventListener("mousedown", f_mdown, true);
+			view_obj.addEventListener("mousemove", f_mmove, true);
+			view_obj.addEventListener("mouseout", f_mout, true);
+			view_obj.addEventListener("mouseup", f_mup, true);
+
+			view_obj = document.getElementById('side_left');
+			view_obj.addEventListener("mousedown", f_mdown, true);
+			view_obj.addEventListener("mousemove", f_mmove, true);
+			view_obj.addEventListener("mouseout", f_mout, true);
+			view_obj.addEventListener("mouseup", f_mup, true);
+		}
+	}
+	
+	// 透かし作成
+	make_sukasi();
+	
+	//キーボード制御
+	document.onkeydown = f_on_keydown;
+
+	//ホイール操作
+	if (document.addEventListener) {
+		if (navigator.userAgent.search("Firefox") != -1) { document.addEventListener('DOMMouseScroll', f_wheel, false); }
+		else { document.addEventListener('mousewheel', f_wheel, false); }
+	}
+	else { document.onmousewheel = f_wheel; }
+
+	// 印刷NG
+	if( print_flag == 0 ){
+		document.getElementById('print').style.display = "none";
+	}
+	
+	// 目次の設定
+	if( m_line.length == 0 ){
+		//目次なしは非表示に
+		document.getElementById('mokuji_block').style.display = "none";
+	}
+	else{		//目次作成
+		var sel_pg = m_line.split("|");
+		var value = "<select id=\"mokuji\" onClick=\"select_click();\" onChange=\"change_chapter(this); return false;\">\n";
+		for(var i=0; i<sel_pg.length; i++){
+			var line = sel_pg[i].split(":#:");
+			value += "<option value=\""+ line[0] +"\">"+ line[1] +"</option>\n";
+		}
+		document.getElementById("mokuji_block").innerHTML = value + "</select>";
+	}
+
+	// 左開き時は移動ボタンの位置を変える
+	if( OpenLR == 0 ){
+		document.getElementById("left_btn").innerHTML = "&#x25C0; 戻る";
+		document.getElementById("right_btn").innerHTML = "進む &#x25B6;";
+	}
+	
+	//　英語版サイトからの来訪時 -> 文言を変更
+	if( en_flag == "1" ){
+		document.getElementById('close_menu').innerText = '× Close Menu';
+		document.getElementById('btn_end').innerText = 'Finish';
+	}
+	
+	if( rt_id == "FIX003" ){
+		document.getElementById("logo_img").src = "https://www.papy.co.jp/img/logo/papyless.gif";
+	}
+	
+};
+
+// selectボタンを押した際に、メニューの自動非表示タイマーをリセットする -> 自動非表示やめたので何もしない
+function select_click(){
+	return;
+}
+
+// URLにフィンガープリントを付ける処理の判定
+function add_param(chk_url){
+	if( cache_update != "0" ){
+		chk_url += "?date="+cache_update;
+		if( auth_key != "" ){
+			chk_url += "&"+auth_key;
+		}
+	}
+	else{
+		if( auth_key != "" ){
+			chk_url += "?"+auth_key;
+		}
+	}
+	
+	if( viewer_mode == "akamai" ){
+		// akamaiの場合、originクエリ文字列を付けることで別キャッシュ扱いにする
+		chk_url += "&origin="+server_name;
+	}
+	
+	return chk_url;
+}
+
+//ロード時、再描画時関数 -> 初期化とページ設定
+function set_init() {
+
+	var obj = document.getElementById("page_bar");
+	bar_h = obj.offsetHeight;
+	
+	t_lock = 1;
+	left=0;center=1;right=2;
+	rt_zoom = 1;
+	
+	win_w = Math.ceil(window.innerWidth);
+	win_h = Math.ceil(window.innerHeight);
+	
+	if( obj.style.visibility == "visible" ){
+		padding_top = bar_h;
+		win_h -= padding_top;
+		document.body.style.paddingTop = padding_top + "px";
+	}
+	else{
+		padding_top = 0;
+		document.body.style.paddingTop = "0px";
+	}
+	
+	// 縦向き横向き判定
+	if( win_w > win_h ){	t_flag = 0; }
+	else{	t_flag = 1; }
+
+	// 今の状態を破棄して初期化
+	document.getElementById("view").innerHTML = "<div id=\"img_block\" style=\"position:relative;\"><canvas id=\"img_0\" style=\"position:absolute\"></canvas><canvas id=\"img_1\" style=\"position:absolute\"></canvas><canvas id=\"img_2\" style=\"position:absolute\"></canvas></div>";
+
+	document.getElementById("view").style.width = win_w+"px";
+	document.getElementById("view").style.height = win_h+"px";			
+		
+	//　調整するため隠す
+	document.getElementById('side_left').style.visibility = "hidden";
+	document.getElementById('side_right').style.visibility = "hidden";
+	
+	img_obj[left] = document.getElementById('img_'+left);
+	img_obj[center] = document.getElementById('img_'+center);
+	img_obj[right] = document.getElementById('img_'+right);
+	
+	img_obj[left].style.visibility = "hidden";
+	img_obj[center].style.visibility = "hidden";
+	img_obj[right].style.visibility = "hidden";
+
+	if( t_flag == 0 && disp_single == 0 ){
+		if( onload_flag == 1 ){
+			if( page == max_page || page == (max_page-1) ){
+				page = 1;
+			}
+		}
+		// 見開き時のページは偶数にしないと、描画がずれる
+		if( page%2 == 1 ){	page-=1; }
+	}
+	else{
+		if( onload_flag == 1 ){
+			if( page == max_page ){
+				page = 1;
+			}
+		}
+		if( page == 0 ){	page = 1;	}		//念のため
+	}
+
+	// 描画設定へ
+	img_set();
+}
+
+// 初期化時描画関数
+function img_set(){
+
+	if( t_flag == 0 && disp_single == 0 ){
+		//　見開き
+		var v1,v2,v3,v4,v5,v6;
+		if(　OpenLR == 1　){
+			v1 = page+3;	v2 = page+2;	v3 = page+1;
+			v4 = page;		v5 = page-1;	v6 = page-2;
+		}
+		else{
+			v1 = page-2;	v2 = page-1;	v3 = page;
+			v4 = page+1;	v5 = page+2;	v6 = page+3;
+		}
+
+		// 2データで1枚扱いにする
+		set_canvas(left,v1,v2,1);
+		set_canvas(center,v3,v4,1);
+		set_canvas(right,v5,v6,1);
+	}
+	else{
+		// 単ページ
+		var v1,v2,v3;
+		if(　OpenLR == 1　){
+			v1 = page+1;	v2 = page;	v3 = page-1;
+			if( v1 > max_page ){ v1 = page; }
+		}
+		else{
+			v1 = page-1;	v2 = page;	v3 = page+1;
+			if( v3 > max_page ){ v3 = page; }
+		}
+		draw_canvas(left,v1,1);
+		draw_canvas(center,v2,1);
+		draw_canvas(right,v3,1);
+	}
+}
+
+
+// 見開き時のcanvas描画(データ取得)
+function set_canvas(tag_idx,page1,page2,init_flag){
+	var cdata1 = "";
+	var cdata2 = "";
+	// ページの状態によって処理を分岐 -> 通常見開き、片面真っ白(1ページ目or最終ページ)、真っ白見開き(ページ範囲外)
+	if( (page1 > max_page || page1 <= 0) && (page2 > max_page || page2 <= 0) ){
+		// ページ範囲外の描画、真っ白
+		draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+	}
+	else if( page1 > max_page || page1 <= 0 ){
+		// page2だけ読みこむ
+		var cdata1 = "";	
+		// -----------------------------------------------------
+		// 先読み判定
+		var load_data = "";
+		for( var i=0; i<max_data_len; i++ ){
+			if( ar_load_data_number[i] == page2 ){
+				if( ar_load_data[i] != undefined ){
+					load_data = ar_load_data[i];
+					break;
+				}
+			}
+		}
+		if( load_data != "" ){
+			var cdata2 = new Uint8Array(load_data);
+			draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+			cdata2 = null;
+		}
+		else{	
+			var data2_url = url_base2 + page2;
+			data2_url = add_param(data2_url);
+			data_xhr[tag_idx][1].open("GET", data2_url, true);
+			data_xhr[tag_idx][1].responseType = "arraybuffer";
+			data_xhr[tag_idx][1].onreadystatechange = function(e){
+				if( e.target.readyState == 4 ){
+					if( e.target.status == 200 ){
+						var res = e.target.response;
+						
+						// 再読み込みの手間を省略させるため、データを一時保存
+						ar_load_data[now_load_pos] = res;
+						ar_load_data_number[now_load_pos] = page2;
+						now_load_pos++;
+						if(now_load_pos >= max_data_len){
+							now_load_pos = 0;
+						}
+						
+						var cdata2 = new Uint8Array(res);
+						draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+						cdata2 = null;
+					}
+					else{
+						f_update_key();
+						return;
+					}
+				}
+			};
+			data_xhr[tag_idx][1].withCredentials = true;		// 
+			data_xhr[tag_idx][1].send();
+		}
+	}
+	else if( page2 > max_page || page2 <= 0 ){
+		// page1だけ読みこむ
+		var cdata2 = "";
+		// -----------------------------------------------------
+		// 先読み判定
+		var load_data = "";
+		for( var i=0; i<max_data_len; i++ ){
+			if( ar_load_data_number[i] == page1 ){
+				if( ar_load_data[i] != undefined ){
+					load_data = ar_load_data[i];
+					break;
+				}
+			}
+		}
+		if( load_data != "" ){
+			var cdata1 = new Uint8Array(load_data);
+			draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+			cdata1 = null;		
+		}
+		else{
+			var data1_url = url_base2 + page1;
+			data1_url = add_param(data1_url);
+			data_xhr[tag_idx][0].open("GET", data1_url, true);
+			data_xhr[tag_idx][0].responseType = "arraybuffer";
+			data_xhr[tag_idx][0].onreadystatechange = function(e){
+				if( e.target.readyState == 4 ){
+					if( e.target.status == 200 ){
+						var res = e.target.response;
+						
+						// 再読み込みの手間を省略させるため、データを一時保存
+						ar_load_data[now_load_pos] = res;
+						ar_load_data_number[now_load_pos] = page1;
+						now_load_pos++;
+						if(now_load_pos >= max_data_len){
+							now_load_pos = 0;
+						}
+						
+						var cdata1 = new Uint8Array(res);
+						draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+						cdata1 = null;
+					}
+					else{
+						f_update_key();
+						return;
+					}
+				}
+			};
+			data_xhr[tag_idx][0].withCredentials = true;
+			data_xhr[tag_idx][0].send();
+		}
+	}
+	else{
+		// page1が左側、page2を右側に描画する
+		// -----------------------------------------------------
+		// 先読み判定
+		var load_data = "";
+		var load_data2 = "";
+		for( var i=0; i<max_data_len; i++ ){
+			if( ar_load_data_number[i] == page1 ){
+				if( ar_load_data[i] != undefined ){
+					load_data = ar_load_data[i];
+				}
+			}
+			if( ar_load_data_number[i] == page2 ){
+				if( ar_load_data[i] != undefined ){
+					load_data2 = ar_load_data[i];
+				}
+			}
+		}
+		if( load_data != "" && load_data2 != "" ){
+			var cdata1 = new Uint8Array(load_data);
+			var cdata2 = new Uint8Array(load_data2);
+			
+			draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+			cdata1 = null;
+			cdata2 = null;
+		}
+		else{
+			// 1枚目の取得
+			var data1_url = url_base2 + page1;
+			data1_url = add_param(data1_url);
+			data_xhr[tag_idx][0].open("GET", data1_url, true);
+			data_xhr[tag_idx][0].responseType = "arraybuffer";
+			data_xhr[tag_idx][0].onreadystatechange = function(e){
+				if( e.target.readyState == 4 ){
+					if( e.target.status == 200 ){
+						var res = e.target.response;
+						var cdata1 = new Uint8Array(res);
+
+						// 再読み込みの手間を省略させるため、データを一時保存
+						ar_load_data[now_load_pos] = res;
+						ar_load_data_number[now_load_pos] = page1;
+						now_load_pos++;
+						if(now_load_pos >= max_data_len){
+							now_load_pos = 0;
+						}
+						
+						// 2枚目の取得
+						var data2_url = url_base2 + page2;
+						data2_url = add_param(data2_url);
+						data_xhr[tag_idx][1].open("GET", data2_url, true);
+						data_xhr[tag_idx][1].responseType = "arraybuffer";
+						//data_xhr[tag_idx][1].overrideMimeType('text/plain; charset=x-user-defined');
+						data_xhr[tag_idx][1].onreadystatechange = function(e){
+							if( e.target.readyState == 4 ){
+								if( e.target.status == 200 ){
+									var res = e.target.response;
+									var cdata2 = new Uint8Array(res);
+									
+									// 再読み込みの手間を省略させるため、データを一時保存
+									ar_load_data[now_load_pos] = res;
+									ar_load_data_number[now_load_pos] = page2;
+									now_load_pos++;
+									if(now_load_pos >= max_data_len){
+										now_load_pos = 0;
+									}
+									
+									draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2);
+									cdata1 = null;
+									cdata2 = null;
+								}
+								else{
+									f_update_key();
+									return;
+								}
+							}
+						};
+						data_xhr[tag_idx][1].withCredentials = true;				// 
+						data_xhr[tag_idx][1].send();
+					}
+					else{
+						f_update_key();
+						return;
+					}
+				}
+			};
+			data_xhr[tag_idx][0].withCredentials = true;
+			data_xhr[tag_idx][0].send();
+		}
+	}
+}
+
+// 見開き時のcanvas描画(canvasの領域決定)
+function draw_canvas_spread(tag_idx,cdata1,cdata2,init_flag,page1,page2){
+
+	var data1_w = 0;
+	var data1_h = 0;
+	var data2_w = 0;
+	var data2_h = 0;
+	//---------------------------------------------
+	if( cdata1 != "" ){
+		var idx_len = "";
+		for (var i = 0; i < 9; i++){
+			idx_len += String.fromCharCode(cdata1[i]);
+		}
+		idx_len = parseInt(idx_len,10);
+
+		var idx = "";
+		if( isNaN(idx_len) ){
+			cdata1 = "";
+		}
+		else{
+			for (var i = 9; i < (idx_len+9); i++){
+				idx += String.fromCharCode(cdata1[i]);
+			}
+			
+			var ar_idx = idx.split("|");
+			data1_w = ar_idx[0];
+			data1_h = ar_idx[1];
+		}
+	}
+	//---------------------------------------------
+
+	//---------------------------------------------	
+	if( cdata2 != "" ){
+		var idx_len = "";
+		for (var i = 0; i < 9; i++){
+			idx_len += String.fromCharCode(cdata2[i]);
+		}
+		idx_len = parseInt(idx_len,10);
+
+		var idx = "";
+		if( isNaN(idx_len) ){
+			cdata2 = "";
+		}
+		else{
+			for (var i = 9; i < (idx_len+9); i++){
+				idx += String.fromCharCode(cdata2[i]);
+			}
+			var ar_idx = idx.split("|");
+			data2_w = ar_idx[0];
+			data2_h = ar_idx[1];
+		}
+	}
+	//---------------------------------------------
+
+	//---------------------------------------------
+	// 描画するcanvasの枠を判定
+	var canvas_w = parseInt(data1_w)+parseInt(data2_w);
+	if( data1_w == 0 && data2_w != 0 ){
+		canvas_w = parseInt(data2_w)*2;
+	}
+	else if( data1_w != 0 && data2_w == 0 ){
+		canvas_w = parseInt(data1_w)*2;
+	}
+	
+	var canvas_h = parseInt(data1_h);
+	if( canvas_h < parseInt(data2_h) ){
+		canvas_h = parseInt(data2_h);
+	}
+
+	// 表示されない部分
+	if( canvas_w == 0 && canvas_h == 0 ){
+		canvas_w = win_w;
+		canvas_h = win_h;
+		data1_w = win_w/2;
+	}
+	//---------------------------------------------
+	
+	var dom = document.getElementById("img_"+tag_idx);
+	var ctx = dom.getContext("2d");
+	dom.width = canvas_w;	dom.height = canvas_h;
+	
+	// 描画関数へ
+	draw_canvas2(tag_idx,cdata1,0,page1,canvas_w/2,canvas_h);	// 左側
+	if( data1_w == 0 ){	data1_w = data2_w;	}
+	draw_canvas2(tag_idx,cdata2,data1_w,page2,canvas_w/2,canvas_h);	// 右側
+
+	// サイズ調整
+	img_rate[tag_idx] = canvas_h/canvas_w;
+	var height = Math.ceil(win_w*img_rate[tag_idx]);
+	if(　height > win_h　){
+		//　縦フィット
+		img_rate[tag_idx] = canvas_w/canvas_h;
+		var width = Math.ceil(win_h*img_rate[tag_idx]);
+		img_obj[tag_idx].style.width = width;		img_obj[tag_idx].style.height = win_h;
+		space[tag_idx] = Math.ceil((win_w - width)/2);		t_space[tag_idx] = 0;
+		vh_flag[tag_idx] = 1;
+	}
+	else{
+		//　横フィット
+		img_obj[tag_idx].style.width = win_w;		img_obj[tag_idx].style.height = height;
+		space[tag_idx] = 0;		t_space[tag_idx] = Math.ceil((win_h - height)/2);
+		if(t_space[tag_idx]<0){	t_space[tag_idx]=0;	}
+		vh_flag[tag_idx] = 0;
+	}
+	
+	if( rt_zoom != 1 ){
+		// 拡大中の場合は、描画後の拡大率に合わせてサイズ変更
+		var tmp_img_vw = win_w*rt_zoom;
+		var tmp_img_vh = win_h*rt_zoom;
+		if( vh_flag[tag_idx] == 1 ){
+			var width = Math.ceil(img_vh*img_rate[tag_idx]);
+			img_obj[tag_idx].style.width = width;
+			img_obj[tag_idx].style.height = tmp_img_vh;
+		}
+		else{
+			var height = Math.ceil(img_vw*img_rate[tag_idx]);
+			img_obj[tag_idx].style.width = tmp_img_vw;
+			img_obj[tag_idx].style.height = height;
+		}
+	}
+	
+	if( init_flag == 1 ){
+		// 初回、再生成時は位置を調整し、フラグを立てる -> 全画像のロードを合わせないとページめくり時に不具合が生じる可能性があるため
+		if(tag_idx == 0){
+			img_obj[tag_idx].style.webkitTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.MozTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.msTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.OTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			t0 = 1;
+		}
+		else if( tag_idx == 1 ){
+			img_obj[tag_idx].style.webkitTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.MozTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.msTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.OTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			t1 = 1;
+		}
+		else{
+			img_obj[tag_idx].style.webkitTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.MozTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.msTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.OTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			t2 = 1;
+		}
+	}
+	else{
+		// ページめくり時
+		adjust();
+	}
+	return;
+}
+
+// canvasを白く塗りつぶす
+function draw_empty(tag_idx,o_width,o_height,dst){
+	var dom = document.getElementById("img_"+tag_idx);
+	var ctx = dom.getContext("2d");
+	ctx.fillStyle = "rgb(255, 255, 255)";
+	ctx.fillRect(0+parseInt(dst), 0, o_width, o_height);
+	return;
+}
+
+// 見開き時のcanvas描画(データ復元とcanvasへの描画)
+function draw_canvas2(tag_idx,cdata,dst,tmp_page,canvas_w,canvas_h){
+
+	// 範囲外のページは白塗りするだけ
+	if( cdata == "" ){
+		draw_empty(tag_idx,canvas_w,canvas_h,dst);
+		return;
+	}
+
+	// 先頭9バイトにidxのデータ量が記述されている
+	var idx_len = "";
+	for (var i = 0; i < 9; i++){
+		idx_len += String.fromCharCode(cdata[i]);
+	}
+	idx_len = parseInt(idx_len,10);
+
+	
+	var idx = "";
+	for (var i = 9; i < (idx_len+9); i++){
+		idx += String.fromCharCode(cdata[i]);
+	}
+
+	// コンテンツ本体は別の配列に入れておく
+	var cnt = 0;
+	var data = new Array();
+	for (var i = (9+idx_len); i < cdata.length; i++){
+		data[cnt] = cdata[i];
+		cnt++;
+	}
+	
+	var dom = document.getElementById("img_"+tag_idx);
+	var ctx = dom.getContext("2d");
+	
+	// ※やっていることはremake()と同じ
+	// 分割数
+	var x = 7;
+	var y = 7;
+	var ar_idx = idx.split("|");
+	var o_width = ar_idx[0];
+	var o_height = ar_idx[1];
+	var diff_w_idx = ar_idx[2]
+	var diff_h_idx = ar_idx[3]
+	ar_idx = ar_idx.splice(4);
+	
+	var width = parseInt(o_width/x);
+	var height = parseInt(o_height/y);
+	var diff_w = parseInt(o_width%x);
+	var diff_h = parseInt(o_height%y);
+	var src = "";
+	if( diff_w != 0 || diff_h != 0 ){
+		if( diff_w != 0 && diff_h == 0 ){
+			// x軸のみ差分あり
+			var dx_obj = new Image();
+			src = f_get_data(diff_w_idx,data);
+			dx_obj.src = "data:image/jpeg;base64,"+src;
+			dx_obj.onload = function() {
+				ctx.drawImage(dx_obj,0,0,diff_w,o_height,0+parseInt(dst),0,diff_w,o_height);
+			}
+		}
+		else if( diff_w == 0 && diff_h != 0 ){
+			// y軸のみ差分あり
+			var dy_obj = new Image();
+			src = f_get_data(diff_h_idx,data);
+			dy_obj.src = "data:image/jpeg;base64,"+src;
+			dy_obj.onload = function() {
+				ctx.drawImage(dy_obj,0,0,o_width,diff_h,0+parseInt(dst),0,o_width,diff_h);
+			}
+		}
+		else{
+			// 両軸差分あり
+			var dx_obj = new Image();
+			src = f_get_data(diff_w_idx,data);
+			dx_obj.src = "data:image/jpeg;base64,"+src;
+			dx_obj.onload = function() {
+				ctx.drawImage(dx_obj,0,0,diff_w,o_height,0+parseInt(dst),0,diff_w,o_height);
+			}
+			
+			var dy_obj = new Image();
+			src = f_get_data(diff_h_idx,data);
+			dy_obj.src = "data:image/jpeg;base64,"+src;
+			dy_obj.onload = function() {
+				ctx.drawImage(dy_obj,0,0,o_width,diff_h,0+parseInt(dst),0,o_width,diff_h);
+			}
+		}
+	}
+	
+	var cnt = 0;
+	var ar_number = new Array(x);
+	// 初期配値、配列設定
+	for( var i=0; i<y; i++ ){
+		ar_number[i] = new Array(y);
+		for( var j=0; j<x; j++ ){
+			ar_number[i][j] = cnt;
+			cnt++;
+		}
+	}
+
+	// 横の位置戻す
+	for( var i=0; i<y; i++ ){
+		var ar_tmp = new Array(x);
+		var st = x - i%x;
+		for( var j=0; j<x; j++ ){
+			if( st >= x ){ st = 0; }
+			ar_tmp[j] = ar_number[i][st];
+			st += 1;
+		}
+		for( var j=0; j<x; j++ ){
+			ar_number[i][j] = ar_tmp[j];
+		}
+	}
+	
+	// 縦の位置戻す
+	for( var i=0; i<x; i++ ){
+		var ar_tmp = new Array(y);
+		var st = y - i%y;
+		for( var j=0; j<y; j++ ){
+			if( st >= y ){ st = 0; }
+			ar_tmp[j] = ar_number[st][i];
+			st += 1;
+		}
+		for( var j=0; j<y; j++ ){
+			ar_number[j][i] = ar_tmp[j];
+		}
+	}
+	
+	// シャッフル戻す
+	var max_loop = 20;
+	for(var i=0; i<x; i++){
+		var num = i+1;
+		var seed = parseInt(tmp_page)+parseInt(prd_ser);
+		if( seed % max_loop == 0 ){
+			seed = Math.abs(tmp_page-prd_ser)+(max_loop+1);
+		}
+		var k = parseInt(((num*seed)+(tmp_page/max_loop)) % max_loop);
+		for( var j=k-1; j>=0; j-- ){
+			ar_number = f_shuffle_r(ar_number,j,i,y);
+		}
+	}
+	
+	var total = x*y;
+	var ar_didx = new Array(total);
+	for( var i=0; i<y; i++ ){
+		for( var j=0; j<x; j++ ){
+			var d_stx = diff_w+(j*width);
+			var d_sty = diff_h+(i*height);
+			var number = ar_number[i][j];
+			ar_didx[number] = new Array(2);
+			ar_didx[number]["0"] = d_stx;
+			ar_didx[number]["1"] = d_sty;
+		}
+	}
+
+	// 上の処理内で描画してしまうと、データの取得順で並び順がばれてしまう。初期配置の順番で描画していく
+	for(var i=0;i<total;i++){
+		src = f_get_data(ar_idx[i],data);
+		f_div_draw(i,parseInt(ar_didx[i][0])+parseInt(dst),ar_didx[i][1],width,height,ctx,src);
+	}
+	data = null;
+}
+
+// 単ページ時のcanvas描画(データ取得)
+function draw_canvas(tag_idx,tmp_page,init_flag){
+
+	// -----------------------------------------------------
+	// 先読み判定
+	var load_data = "";
+	for( var i=0; i<max_data_len; i++ ){
+		if( ar_load_data_number[i] == tmp_page ){
+			if( ar_load_data[i] != undefined ){
+				load_data = ar_load_data[i];
+				break;
+			}
+		}
+	}
+	if( load_data != "" ){
+		var cdata = new Uint8Array(load_data);
+		// 先頭9バイトにidxのデータ量が記述されている
+		var idx_len = "";
+		for (var i = 0; i < 9; i++){
+			idx_len += String.fromCharCode(cdata[i]);
+		}
+		idx_len = parseInt(idx_len,10);
+
+		var idx = "";
+		var data = new Array();
+		if( isNaN(idx_len) ){
+		}
+		else{
+			for (var i = 9; i < (idx_len+9); i++){
+				idx += String.fromCharCode(cdata[i]);
+			}
+
+			// コンテンツ本体は別の配列に入れておく
+			var cnt = 0;
+			for (var i = (9+idx_len); i < cdata.length; i++){
+				data[cnt] = cdata[i];
+				cnt++;
+			}
+		}
+		
+		remake(data,idx,tag_idx,tmp_page,init_flag);
+		cdata = null;
+		data = null;
+		return;
+	}
+	// -----------------------------------------------------
+
+	// -----------------------------------------------------
+	var data_url = url_base2 + tmp_page;
+	data_url = add_param(data_url);
+	data_xhr[tag_idx][0].open("GET", data_url, true);
+	data_xhr[tag_idx][0].responseType = "arraybuffer";
+	//data_xhr[tag_idx][0].overrideMimeType('text/plain; charset=x-user-defined');
+	data_xhr[tag_idx][0].onreadystatechange = function(e){
+		if( e.target.readyState == 4 ){
+			if( e.target.status == 200 ){
+				var res = e.target.response;
+				var cdata = new Uint8Array(res);
+
+				// 再読み込みの手間を省略させるため、データを一時保存
+				ar_load_data[now_load_pos] = res;
+				ar_load_data_number[now_load_pos] = tmp_page;
+				now_load_pos++;
+				if(now_load_pos >= max_data_len){
+					now_load_pos = 0;
+				}
+				
+				// 先頭9バイトにidxのデータ量が記述されている
+				var idx_len = "";
+				for (var i = 0; i < 9; i++){
+					idx_len += String.fromCharCode(cdata[i]);
+				}
+				idx_len = parseInt(idx_len,10);
+
+				var idx = "";
+				var data = new Array();
+				if( isNaN(idx_len) ){
+				}
+				else{
+					for (var i = 9; i < (idx_len+9); i++){
+						idx += String.fromCharCode(cdata[i]);
+					}
+					
+					// コンテンツ本体は別の配列に入れておく
+					var cnt = 0;
+					for (var i = (9+idx_len); i < cdata.length; i++){
+						data[cnt] = cdata[i];
+						cnt++;
+					}
+				}
+
+				remake(data,idx,tag_idx,tmp_page,init_flag);
+				
+				cdata = null;
+				data = null;
+			}
+			else{
+				f_update_key();
+				return;
+			}
+		}
+	};
+	data_xhr[tag_idx][0].withCredentials = true;
+	data_xhr[tag_idx][0].send();
+	// -----------------------------------------------------
+	
+	return;
+}
+
+// 単ページ時のcanvas描画(データ復元とcanvasへの描画)
+function remake(data,idx,tag_idx,tmp_page,init_flag){
+
+	if( idx == "" ){
+		var o_width = document.getElementById("img_"+tag_idx).width;
+		var o_height = document.getElementById("img_"+tag_idx).height;
+		draw_empty(tag_idx,o_width,o_height,0)
+	}
+	else{
+		var dom = document.getElementById("img_"+tag_idx);
+		var ctx = dom.getContext("2d");
+	
+		// 分割数
+		var x = 7;
+		var y = 7;
+		var ar_idx = idx.split("|");
+		var o_width = ar_idx[0];
+		var o_height = ar_idx[1];
+		var diff_w_idx = ar_idx[2]
+		var diff_h_idx = ar_idx[3]
+		ar_idx = ar_idx.splice(4);
+		dom.width = o_width;	dom.height = o_height;
+		var width = parseInt(o_width/x);
+		var height = parseInt(o_height/y);
+		var diff_w = parseInt(o_width%x);
+		var diff_h = parseInt(o_height%y);
+		var src = "";
+		if( diff_w != 0 || diff_h != 0 ){
+			if( diff_w != 0 && diff_h == 0 ){
+				// x軸のみ差分あり
+				var dx_obj = new Image();
+				src = f_get_data(diff_w_idx,data);
+				dx_obj.src = "data:image/jpeg;base64,"+src;
+				dx_obj.onload = function() {
+					ctx.drawImage(dx_obj,0,0,diff_w,o_height,0,0,diff_w,o_height);
+					dx_obj = null;
+				}
+			}
+			else if( diff_w == 0 && diff_h != 0 ){
+				// y軸のみ差分あり
+				var dy_obj = new Image();
+				src = f_get_data(diff_h_idx,data);
+				dy_obj.src = "data:image/jpeg;base64,"+src;
+				dy_obj.onload = function() {
+					ctx.drawImage(dy_obj,0,0,o_width,diff_h,0,0,o_width,diff_h);
+					dy_obj = null;
+				}
+			}
+			else{
+				// 両軸差分あり
+				var dx_obj = new Image();
+				src = f_get_data(diff_w_idx,data);
+				dx_obj.src = "data:image/jpeg;base64,"+src;
+				dx_obj.onload = function() {
+					ctx.drawImage(dx_obj,0,0,diff_w,o_height,0,0,diff_w,o_height);
+					dx_obj = null;
+				}
+				
+				var dy_obj = new Image();
+				src = f_get_data(diff_h_idx,data);
+				dy_obj.src = "data:image/jpeg;base64,"+src;
+				dy_obj.onload = function() {
+					ctx.drawImage(dy_obj,0,0,o_width,diff_h,0,0,o_width,diff_h);
+					dy_obj = null;
+				}
+			}
+		}
+		
+		var cnt = 0;
+		var ar_number = new Array(x);
+		// 初期配値、配列設定
+		for( var i=0; i<y; i++ ){
+			ar_number[i] = new Array(y);
+			for( var j=0; j<x; j++ ){
+				ar_number[i][j] = cnt;
+				cnt++;
+			}
+		}
+
+		// 横の位置戻す
+		for( var i=0; i<y; i++ ){
+			var ar_tmp = new Array(x);
+			var st = x - i%x;
+			for( var j=0; j<x; j++ ){
+				if( st >= x ){ st = 0; }
+				ar_tmp[j] = ar_number[i][st];
+				st += 1;
+			}
+			for( var j=0; j<x; j++ ){
+				ar_number[i][j] = ar_tmp[j];
+			}
+		}
+		
+		// 縦の位置戻す
+		for( var i=0; i<x; i++ ){
+			var ar_tmp = new Array(y);
+			var st = y - i%y;
+			for( var j=0; j<y; j++ ){
+				if( st >= y ){ st = 0; }
+				ar_tmp[j] = ar_number[st][i];
+				st += 1;
+			}
+			for( var j=0; j<y; j++ ){
+				ar_number[j][i] = ar_tmp[j];
+			}
+		}
+		
+		// シャッフル戻す
+		var max_loop = 20;
+		for(var i=0; i<x; i++){
+			var num = i+1;
+			var seed = parseInt(tmp_page)+parseInt(prd_ser);
+			if( seed % max_loop == 0 ){
+				seed = Math.abs(tmp_page-prd_ser)+(max_loop+1);
+			}
+			var k = parseInt(((num*seed)+(tmp_page/max_loop)) % max_loop);
+			for( var j=k-1; j>=0; j-- ){
+				ar_number = f_shuffle_r(ar_number,j,i,y);
+			}
+		}
+		
+		var total = x*y;
+		var ar_didx = new Array(total);
+		for( var i=0; i<y; i++ ){
+			for( var j=0; j<x; j++ ){
+				var d_stx = diff_w+(j*width);
+				var d_sty = diff_h+(i*height);
+				var number = ar_number[i][j];
+				ar_didx[number] = new Array(2);
+				ar_didx[number]["0"] = d_stx;
+				ar_didx[number]["1"] = d_sty;
+			}
+		}
+
+		// 上の処理内で描画してしまうと、データの取得順で並び順がばれてしまう。初期配置の順番で描画していく
+		for(var i=0;i<total;i++){
+			src = f_get_data(ar_idx[i],data);
+			f_div_draw(i,ar_didx[i][0],ar_didx[i][1],width,height,ctx,src);
+		}
+		ar_number = null;
+		ar_didx = null;
+	}
+	
+	img_rate[tag_idx] = o_height/o_width;
+	var height = Math.ceil(win_w*img_rate[tag_idx]);
+	if( t_flag == 0 && disp_single == 0 ){
+		//　端末横向き時は横フィットで固定
+		img_obj[tag_idx].style.width = win_w;		img_obj[tag_idx].style.height = height;
+		space[tag_idx] = 0;		t_space[tag_idx] = Math.ceil((win_h - height)/2);
+		if(t_space[tag_idx]<0){	t_space[tag_idx]=0;	}
+		vh_flag[tag_idx] = 0;
+	}
+	else{
+		if(　height > win_h　){
+			//　縦フィット
+			img_rate[tag_idx] = o_width/o_height;
+			var width = Math.ceil(win_h*img_rate[tag_idx]);
+			img_obj[tag_idx].style.width = width;		img_obj[tag_idx].style.height = win_h;
+			space[tag_idx] = Math.ceil((win_w - width)/2);		t_space[tag_idx] = 0;
+			vh_flag[tag_idx] = 1;
+		}
+		else{
+			//　横フィット
+			img_obj[tag_idx].style.width = win_w;		img_obj[tag_idx].style.height = height;
+			space[tag_idx] = 0;		t_space[tag_idx] = Math.ceil((win_h - height)/2);
+			if(t_space[tag_idx]<0){	t_space[tag_idx]=0;	}
+			vh_flag[tag_idx] = 0;
+		}
+	}
+
+	if( rt_zoom != 1 ){
+		var tmp_img_vw = win_w*rt_zoom;
+		var tmp_img_vh = win_h*rt_zoom;
+		if( vh_flag[tag_idx] == 1 ){		//画像縦サイズがウィンドウ縦サイズより大きい場合縦フィットの１枚画像
+			var width = Math.ceil(img_vh*img_rate[tag_idx]);
+			img_obj[tag_idx].style.width = width;
+			img_obj[tag_idx].style.height = tmp_img_vh;
+		}
+		else{
+			var height = Math.ceil(img_vw*img_rate[tag_idx]);
+			img_obj[tag_idx].style.width = tmp_img_vw;
+			img_obj[tag_idx].style.height = height;
+		}
+	}
+	
+	if( init_flag == 1 ){
+		// 位置調整(img_set時)
+		if(tag_idx == 0){
+			img_obj[tag_idx].style.webkitTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.MozTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.msTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.OTransform = "translate3d("+ (-win_w+space[tag_idx]*3) +"px,"+ t_space[tag_idx] +"px, 0)";
+			t0 = 1;
+		}
+		else if( tag_idx == 1 ){
+			img_obj[tag_idx].style.webkitTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.MozTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.msTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.OTransform = "translate3d("+ space[tag_idx] +"px,"+ t_space[tag_idx] +"px, 0)";
+			t1 = 1;
+		}
+		else{
+			img_obj[tag_idx].style.webkitTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.MozTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.msTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			img_obj[tag_idx].style.OTransform = "translate3d("+ win_w +"px,"+ t_space[tag_idx] +"px, 0)";
+			t2 = 1;
+		}
+	}
+	else{
+		adjust();
+	}
+	return;
+}
+
+// データの部分的な取得、base64化して返却
+function f_get_data(idx,data){
+	if( idx == 0 ){ return ""; }
+	var ar_tmp = idx.split(",");
+
+	var st = parseInt(ar_tmp[0]);
+	var ed = parseInt(ar_tmp[0])+parseInt(ar_tmp[1]);
+
+	var cdata = "";
+	for (var i = st; i < ed; i++){
+		cdata += String.fromCharCode(data[i]);
+	}
+
+	// base64encode
+	src = window.btoa(cdata);
+	return src;
+}
+
+// canvasの指定位置に描画
+function f_div_draw(idx,d_stx,d_sty,width,height,ctx,src){
+	var img_obj = new Image();
+	img_obj.src = "data:image/jpeg;base64,"+src;
+	img_obj.onload = function() {
+		ctx.drawImage(img_obj,0,0,width,height,d_stx,d_sty,width,height);
+		img_obj = null;
+	}
+	return;
+}
+
+// 分割画像の元位置判定()
+function f_shuffle_r(ar_number,snum,x_idx,y){
+	var gn = kn = parseInt(y/2);
+	if( y%2 != 0 ){	gn += 1;	}
+
+	var ar_g = new Array(gn);
+	var ar_k = new Array(kn);
+	var g_cnt=k_cnt=0;
+	
+	var ar_tmp = new Array(y);
+	var cnt = 0;
+	if( snum%2 == 0 ){
+		for( var i=0; i<y; i++ ){
+			if( i%2 == 0 ){
+				ar_g[g_cnt] = ar_number[i][x_idx];
+				g_cnt++;
+			}
+			else{
+				ar_k[k_cnt] = ar_number[i][x_idx];
+				k_cnt++;
+			}
+		}
+	
+		for( var i=0; i<gn; i++ ){
+			// 奇数、偶数の入れ替え
+			if( ar_k[i] != undefined ){
+				ar_tmp[cnt] = ar_k[i];
+				cnt++;
+			}
+			if( ar_g[i] != undefined ){
+				ar_tmp[cnt] = ar_g[i];
+				cnt++;
+			}
+		}
+	}
+	else{
+		for( var i=0; i<y; i++ ){
+			if( i < gn ){
+				ar_g[g_cnt] = ar_number[i][x_idx];
+				g_cnt++;
+			}
+			else{
+				ar_k[k_cnt] = ar_number[i][x_idx];
+				k_cnt++;
+			}
+		}
+	
+		for( var i=0; i<gn; i++ ){
+			// 偶数->奇数の順番に挿入
+			if( ar_g[i] != undefined ){
+				ar_tmp[cnt] = ar_g[i];
+				cnt++;
+			}
+			if( ar_k[i] != undefined ){
+				ar_tmp[cnt] = ar_k[i];
+				cnt++;
+			}
+		}
+	}
+
+	// 元配列を書き換える	
+	for( var i=0; i<y; i++ ){
+		ar_number[i][x_idx] = ar_tmp[i];
+	}
+	
+	ar_tmp = null;
+	ar_g = null;
+	ar_k = null;
+	return ar_number;
+}
+
+// 右側の画像を更新
+function img_set_right(){
+	var temp = left;
+	left = center;	center = right;	right = temp;
+	if( rt_zoom != 1 ){
+	
+		img_obj[center].style.visibility='visible';
+		img_obj[right].style.visibility='hidden';
+		img_obj[left].style.visibility='hidden';
+	
+		// 右開き
+		if( OpenLR == 1 ){
+			pos2 = 0;
+			pos2_y = win_h - parseInt(img_obj[center].style.height);
+		}
+		else{
+			pos2 = 0;
+			pos2_y = 0;
+		}
+		
+		if( parseInt(img_obj[center].style.height) > win_h && parseInt(img_obj[center].style.width) < win_w ){
+			// y移動だけ x座標を中央寄せ
+			pos2 = (win_w - parseInt(img_obj[center].style.width))/2;
+		}
+		else if( parseInt(img_obj[center].style.height) < win_h && parseInt(img_obj[center].style.width) > win_w ){
+			// x移動だけ y座標を中央寄せ
+			pos2_y = (win_h - parseInt(img_obj[center].style.height))/2;
+		}
+		
+		pos1_y = 0;
+		pos3_y = 0;
+	
+		//-----------------------------------------------------
+		img_obj[center].style.webkitTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.webkitTransition = no_animation;
+		
+		img_obj[center].style.MozTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.MozTransition = no_animation;
+
+		img_obj[center].style.msTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.msTransition = no_animation;
+		
+		img_obj[center].style.OTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.OTransition = no_animation;
+		//-----------------------------------------------------
+		
+		//-----------------------------------------------------
+		img_obj[left].style.webkitTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+		img_obj[left].style.webkitTransition = no_animation;
+		
+		img_obj[left].style.MozTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+		img_obj[left].style.MozTransition = no_animation;
+		
+		img_obj[left].style.msTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+		img_obj[left].style.msTransition = no_animation;
+		
+		img_obj[left].style.OTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+		img_obj[left].style.OTransition = no_animation;
+		//-----------------------------------------------------
+		
+		// 単ページの場合は、ここでは動かさない
+		if( t_flag == 0 && disp_single == 0 ){
+			//-----------------------------------------------------
+			img_obj[right].style.webkitTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+			img_obj[right].style.webkitTransition = no_animation;
+			
+			img_obj[right].style.MozTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+			img_obj[right].style.MozTransition = no_animation;
+			
+			img_obj[right].style.msTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+			img_obj[right].style.msTransition = no_animation;
+			
+			img_obj[right].style.OTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+			img_obj[right].style.OTransition = no_animation;
+			//-----------------------------------------------------
+		}
+	}
+	
+	if( t_flag == 0 && disp_single == 0 ){
+		var v1,v2,v3,v4,v5,v6;
+		if(　OpenLR == 1　){
+			page-=2;
+			var v5 = page-1;	var v6 = page-2;
+		}
+		else{
+			page+=2;
+			var v5 = page+2;	var v6 = page+3;
+		}
+		set_canvas(right,v5,v6,0);
+	}
+	else{
+		if( OpenLR == 1 ){
+			page-=1;	var v1 = page-1;
+		}
+		else{
+			page+=1;	var v1 = page+1;
+			if( v1 > max_page ){ v1 = page; }		
+		}
+		draw_canvas(right,v1,0);
+	}
+	
+}
+
+// 左側の画像を更新
+function img_set_left(){
+	var temp = right;
+	right=center;	center=left;	left=temp;
+
+	if( rt_zoom != 1 ){
+	
+		img_obj[center].style.visibility='visible';
+		img_obj[right].style.visibility='hidden';
+		img_obj[left].style.visibility='hidden';
+	
+		// 右開き
+		if( OpenLR == 1 ){
+			pos2 = win_w - parseInt(img_obj[center].style.width);
+			pos2_y = 0;
+		}
+		else{
+			pos2 = win_w - parseInt(img_obj[center].style.width);
+			pos2_y = win_h - parseInt(img_obj[center].style.height);
+		}
+
+		if( parseInt(img_obj[center].style.height) > win_h && parseInt(img_obj[center].style.width) < win_w ){
+			// y移動だけ x座標を中央寄せ
+			pos2 = (win_w - parseInt(img_obj[center].style.width))/2;
+		}
+		else if( parseInt(img_obj[center].style.height) < win_h && parseInt(img_obj[center].style.width) > win_w ){
+			// x移動だけ y座標を中央寄せ
+			pos2_y = (win_h - parseInt(img_obj[center].style.height))/2;
+		}
+
+		
+		pos1_y = 0;
+		pos3_y = 0;
+	
+		//-----------------------------------------------------
+		img_obj[center].style.webkitTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.webkitTransition = no_animation;
+		
+		img_obj[center].style.MozTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.MozTransition = no_animation;
+
+		img_obj[center].style.msTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.msTransition = no_animation;
+		
+		img_obj[center].style.OTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.OTransition = no_animation;
+		//-----------------------------------------------------
+		
+		// 単ページの場合は、ここでは動かさない
+		if( t_flag == 0 && disp_single == 0 ){
+			//-----------------------------------------------------
+			img_obj[left].style.webkitTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+			img_obj[left].style.webkitTransition = no_animation;
+			
+			img_obj[left].style.MozTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+			img_obj[left].style.MozTransition = no_animation;
+			
+			img_obj[left].style.msTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+			img_obj[left].style.msTransition = no_animation;
+			
+			img_obj[left].style.OTransform = "translate3d("+(pos2-parseInt(img_obj[left].style.width))+"px, "+ pos1_y +"px, 0)";
+			img_obj[left].style.OTransition = no_animation;
+			//-----------------------------------------------------
+		}
+		
+		//-----------------------------------------------------
+		img_obj[right].style.webkitTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+		img_obj[right].style.webkitTransition = no_animation;
+		
+		img_obj[right].style.MozTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+		img_obj[right].style.MozTransition = no_animation;
+		
+		img_obj[right].style.msTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+		img_obj[right].style.msTransition = no_animation;
+		
+		img_obj[right].style.OTransform = "translate3d("+(pos2+parseInt(img_obj[center].style.width))+"px, "+ pos3_y +"px, 0)";
+		img_obj[right].style.OTransition = no_animation;
+		//-----------------------------------------------------
+	}
+	
+	
+	if( t_flag == 0 && disp_single == 0 ){
+		if(　OpenLR == 1　){
+			page+=2;
+			var v1 = page+3;	var v2 = page+2;
+		}
+		else{
+			page-=2;
+			var v1 = page-2;	var v2 = page-1;
+		}
+		set_canvas(left,v1,v2,0);
+	}
+	else{	
+		if( OpenLR == 0 ){
+			page-=1;	var v1 = page-1;
+		}
+		else{
+			page+=1;	var v1 = page+1;
+			if( v1 > max_page ){ v1 = page; }			
+		}
+		draw_canvas(left,v1,0);
+	}
+	
+}
+
+//ロード時、またはウィンドウサイズが変更した際での色々調整
+function adjust_init(){
+
+	document.getElementById("loading_block").style.display = "none";
+
+	var Slider = document.getElementById("slider");
+	Slider.noUiSlider.set(page);
+	document.getElementById('slider_value').innerHTML = page + "/" + max_page;
+	
+	img_obj[left].style.visibility = "visible";	
+	img_obj[center].style.visibility = "visible";	
+	img_obj[right].style.visibility = "visible";		
+
+	document.getElementById('side_left').style.visibility = "visible";
+	document.getElementById('side_right').style.visibility = "visible";
+
+	var pos = parseInt( win_w*0.85 - win_w*0.70/(max_page-1)*(page-1) - 20 );
+	if( OpenLR == 0 ){		pos = win_w*0.70/(max_page-1)*(page-1) + win_w*0.15 - 20;	}
+
+	setTimeout(function(){
+	
+		//-----------------------------------
+		//幕の位置
+		var side_left = document.getElementById('side_left');
+		var side_right = document.getElementById('side_right');
+		
+		side_right.style.display = "block";
+		side_left.style.display = "block";
+		
+		if( space[center] > t_space[center] ){
+			side_left.style.left = 0;				side_left.style.top = 0 + padding_top;
+			side_left.style.width = space[center];	side_left.style.height = win_h;			
+
+			side_right.style.left = parseInt(img_obj[center].style.width)+space[center];	side_right.style.top = 0 + padding_top;
+			side_right.style.width = space[center];											side_right.style.height = win_h;
+			var temp_width = parseInt(side_right.style.width) + parseInt(side_left.style.width) + parseInt(img_obj[center].style.width);	
+			var diff = win_w - temp_width;			
+			if( diff != 0 ){	side_right.style.width = space[center]+diff;	}
+		}
+		else{
+			side_left.style.left = 0;		side_left.style.top = 0 + padding_top;
+			side_left.style.width = win_w;	side_left.style.height = t_space[center];			
+			
+			side_right.style.left = 0;		side_right.style.top = t_space[center]+parseInt(img_obj[center].style.height) + padding_top;
+			side_right.style.width = win_w;	side_right.style.height = t_space[center];	
+			
+			var temp_height = parseInt(side_right.style.height) + parseInt(side_left.style.height) + parseInt(img_obj[center].style.height);	
+			var diff = win_h - temp_height;
+			if( diff != 0 ){	side_right.style.height = t_space[center]+diff;	}
+		}
+		//-----------------------------------
+	},200);
+	
+	// 中央画像の開始位置
+	pos2 = space[center];
+	pos2_y = t_space[center];	
+	
+	// 左右画像の位置
+	pos1_y = t_space[left];
+	pos3_y = t_space[right];
+	
+	if( t_flag == 0 && disp_single == 0 ){
+		//------------------------------------------------------
+		img_obj[left].style.webkitTransform = "translate3d("+ (pos2-(parseInt(img_obj[left].style.width))-1) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.webkitTransition = no_animation;
+
+		img_obj[left].style.MozTransform = "translate3d("+ (pos2-(parseInt(img_obj[left].style.width))-1) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.MozTransition = no_animation;
+		
+		img_obj[left].style.msTransform = "translate3d("+ (pos2-(parseInt(img_obj[left].style.width))-1) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.msTransition = no_animation;
+		
+		img_obj[left].style.OTransform = "translate3d("+ (pos2-(parseInt(img_obj[left].style.width))-1) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.OTransition = no_animation;
+		//------------------------------------------------------
+		
+		//------------------------------------------------------
+		img_obj[right].style.webkitTransform = "translate3d("+ (pos2+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.webkitTransition = no_animation;
+		
+		img_obj[right].style.MozTransform = "translate3d("+ (pos2+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.MozTransition = no_animation;
+		
+		img_obj[right].style.msTransform = "translate3d("+ (pos2+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.msTransition = no_animation;
+		
+		img_obj[right].style.OTransform = "translate3d("+ (pos2+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.OTransition = no_animation;
+		//------------------------------------------------------
+	}
+	else{
+		//------------------------------------------------------
+		img_obj[left].style.webkitTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.webkitTransition = no_animation;
+
+		img_obj[left].style.MozTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.MozTransition = no_animation;
+		
+		img_obj[left].style.msTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.msTransition = no_animation;
+		
+		img_obj[left].style.OTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+		img_obj[left].style.OTransition = no_animation;
+		//------------------------------------------------------
+		
+		//------------------------------------------------------
+		img_obj[right].style.webkitTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.webkitTransition = no_animation;
+		
+		img_obj[right].style.MozTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.MozTransition = no_animation;
+		
+		img_obj[right].style.msTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.msTransition = no_animation;
+		
+		img_obj[right].style.OTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+		img_obj[right].style.OTransition = no_animation;
+		//------------------------------------------------------
+	}
+	
+	img_obj[left].style.zIndex = 3;	
+	img_obj[center].style.zIndex = 2;	
+	img_obj[right].style.zIndex = 1;
+	
+	wheel_move = 0;
+	keydown_move = 0;
+	
+	t_lock = 0;		//ロック解除
+	if( onload_flag == 1 ){
+		onload_flag = 0;
+	}
+	set_bookmark();
+	//PreLoad();
+	
+	var add_h = 0;
+	if( document.getElementById("page_bar").style.visibility == "visible" ){
+		add_h = padding_top;
+	}
+	
+	// 透かしのポジション調整
+	var left_ps = space[center];
+	var obj = document.getElementById('sukasi0');
+	obj.style.top = Math.ceil(window.innerHeight) - obj.height - t_space[center];
+	obj.style.left = left_ps;
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi2');
+	obj.style.top = (Math.ceil(window.innerHeight) - obj.height - t_space[center])/2;
+	obj.style.left = left_ps;
+	obj.style.webkitTransform = "rotate(-90deg)";
+	obj.style.msTransform = "rotate(-90deg)";
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi4');
+	obj.style.top = t_space[center] + add_h;
+	obj.style.left = left_ps;
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi1');
+	obj.style.top = Math.ceil(window.innerHeight) - obj.height - t_space[center];
+	obj.style.left = win_w - space[center] - obj.width;
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi3');
+	obj.style.top = (Math.ceil(window.innerHeight) - obj.height - t_space[center])/2;
+	obj.style.left = win_w - space[center];
+	obj.style.webkitTransform = "rotate(90deg)";
+	obj.style.msTransform = "rotate(90deg)";
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi5');
+	obj.style.top = t_space[center] + add_h;
+	obj.style.left = win_w - space[center] - obj.width;
+	obj.style.visibility = 'visible';
+	
+	key_update_cnt = 0;
+	
+	return;
+}
+
+// ページ移動時の調整
+function adjust(){
+
+	var Slider = document.getElementById("slider");
+	Slider.noUiSlider.set(page);
+	document.getElementById('slider_value').innerHTML = page + "/" + max_page;
+	
+	//------------------------------
+	// 中央画像の開始位置
+	if( rt_zoom != 1 ){
+	}
+	else{
+		pos2 = space[center]; 
+		pos2_y = t_space[center];
+		
+		pos1_y = t_space[left];
+		pos3_y = t_space[right];
+
+		if( t_flag == 0 && disp_single == 0 ){
+			var tmp_left_pos = space[center]-parseInt(img_obj[left].style.width);
+			if( tmp_left_pos != left_pos ){
+				left_pos = tmp_left_pos;
+				img_obj[left].style.webkitTransform = "translate3d("+ tmp_left_pos +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.webkitTransition = no_animation;
+
+				img_obj[left].style.MozTransform = "translate3d("+ tmp_left_pos +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.MozTransition = no_animation;
+				
+				img_obj[left].style.msTransform = "translate3d("+ tmp_left_pos +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.msTransition = no_animation;
+				
+				img_obj[left].style.OTransform = "translate3d("+ tmp_left_pos +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.OTransition = no_animation;
+			}
+		}
+		else{
+			// 画像が被らない位置に移動させる
+			//------------------------------------------------------
+			img_obj[left].style.webkitTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.webkitTransition = no_animation;
+
+			img_obj[left].style.MozTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.MozTransition = no_animation;
+			
+			img_obj[left].style.msTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.msTransition = no_animation;
+			
+			img_obj[left].style.OTransform = "translate3d("+ (-(parseInt(img_obj[left].style.width))) +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.OTransition = no_animation;
+			//------------------------------------------------------
+			
+			//------------------------------------------------------
+			img_obj[right].style.webkitTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.webkitTransition = no_animation;
+			
+			img_obj[right].style.MozTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.MozTransition = no_animation;
+			
+			img_obj[right].style.msTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.msTransition = no_animation;
+			
+			img_obj[right].style.OTransform = "translate3d("+ (win_w+(parseInt(img_obj[center].style.width))) +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.OTransition = no_animation;
+			//------------------------------------------------------
+		}
+	}
+	
+	//幕の位置
+	var side_left = document.getElementById('side_left');
+	var side_right = document.getElementById('side_right');
+	
+	if( space[center] > t_space[center] ){				//横幕
+		side_left.style.left = 0;				side_left.style.top = 0 + padding_top;
+		side_left.style.width = space[center];	side_left.style.height = win_h;
+
+		side_right.style.left = parseInt(img_obj[center].style.width)+space[center];	side_right.style.top = 0 + padding_top;
+		side_right.style.width = space[center];											side_right.style.height = win_h;
+		var temp_width = parseInt(side_right.style.width) + parseInt(side_left.style.width) + parseInt(img_obj[center].style.width);	
+		var diff = win_w - temp_width;
+		if( diff != 0 ){	side_right.style.width = space[center]+diff;	}
+					
+	}
+	else{												//縦幕
+		side_left.style.left = 0;		side_left.style.top = 0 + padding_top;
+		side_left.style.width = win_w;	side_left.style.height = t_space[center];			
+		
+		side_right.style.left = 0;		side_right.style.top = t_space[center]+parseInt(img_obj[center].style.height) + padding_top;
+		side_right.style.width = win_w;	side_right.style.height = t_space[center];	
+		
+		var temp_height = parseInt(side_right.style.height) + parseInt(side_left.style.height) + parseInt(img_obj[center].style.height);	
+		var diff = win_h - temp_height;
+		if( diff != 0 ){	side_right.style.height = t_space[center]+diff;	}
+	}
+	
+	var add_h = 0;
+	if( document.getElementById("page_bar").style.visibility == "visible" ){
+		add_h = padding_top;
+	}
+	
+	// 透かしのポジション調整
+	var left_ps = space[center];
+	var obj = document.getElementById('sukasi0');
+	obj.style.top = Math.ceil(window.innerHeight) - obj.height - t_space[center];
+	obj.style.left = left_ps;
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi2');
+	obj.style.top = (Math.ceil(window.innerHeight) - obj.height - t_space[center])/2;
+	obj.style.left = left_ps;
+	obj.style.webkitTransform = "rotate(-90deg)";
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi4');
+	obj.style.top = t_space[center] + add_h;
+	obj.style.left = left_ps;
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi1');
+	obj.style.top = Math.ceil(window.innerHeight) - obj.height - t_space[center];
+	obj.style.left = win_w - space[center] - obj.width;
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi3');
+	obj.style.top = (Math.ceil(window.innerHeight) - obj.height - t_space[center])/2;
+	obj.style.left = win_w - space[center];
+	obj.style.webkitTransform = "rotate(90deg)";
+	obj.style.visibility = 'visible';
+	
+	obj = document.getElementById('sukasi5');
+	obj.style.top = t_space[center] + add_h;
+	obj.style.left = win_w - space[center] - obj.width;
+	obj.style.visibility = 'visible';
+	
+	wheel_move = 0;
+	keydown_move = 0;
+	t_lock = 0;
+	set_bookmark();
+	//PreLoad();
+	
+	key_update_cnt = 0;
+	return;
+}
+
+//クリックイベント関数(全てタップイベント関数への誘導になっている)
+function f_mdown(e){
+	e.preventDefault();					// イベントをブラウザーに渡さない
+	mdown_flg = 1;
+	touch_start(e);
+}
+
+function f_mmove(e){
+	e.preventDefault();					// イベントをブラウザーに渡さない
+	f_check_cursor(e);
+	if( mdown_flg == 0 ){ return; }
+	touch_move(e);
+}
+
+function f_mout(){
+	if( mdown_flg == 0 ){ return; }
+	touch_end();
+}
+
+function f_mup(){
+	if( mdown_flg == 0 ){ return; }
+	touch_end();
+}
+
+// カーソルの切り替え判定
+function f_check_cursor(e){
+	// カーソルの変更判定
+	if( e.touches ){
+		var temp_x = e.touches[0].pageX;
+		var temp_y = e.touches[0].pageY;
+	}
+	else{
+		var temp_x = e.clientX;
+		var temp_y = e.clientY;
+	}
+	var tmp_cursor = "";
+	var pos_left = (win_w*(2/5));	var pos_right = ( win_w*(3/5) );
+	if( 0 <= temp_x && temp_x < pos_left ){
+		tmp_cursor = "left";
+	}
+	else if( pos_right < temp_x && temp_x < (win_w)){	
+		tmp_cursor = "right";
+	}
+	else{
+		tmp_cursor = "center";
+	}
+	
+	now_cursor = tmp_cursor;
+	if( now_cursor == "center" ){
+		var arrow_url = "https://img.papy.co.jp/viewer/img/menu.png";
+		if( ie_flag == 1 ){
+			arrow_url = "https://img.papy.co.jp/viewer/img/menu.cur";
+		}
+		
+		document.getElementById("view").style.cursor = 'url(' + arrow_url + '), auto';
+		document.getElementById("side_left").style.cursor = 'url(' + arrow_url + '), auto';
+		document.getElementById("side_right").style.cursor = 'url(' + arrow_url + '), auto';
+		
+	}
+	else{
+		var arrow_url = "https://img.papy.co.jp/viewer/img/arrows_" + now_cursor + ".png";
+		if( ie_flag == 1 ){
+			arrow_url = "https://img.papy.co.jp/viewer/img/arrows_" + now_cursor + ".cur";
+		}
+		document.getElementById("view").style.cursor = 'url(' + arrow_url + '), auto';
+		document.getElementById("side_left").style.cursor = 'url(' + arrow_url + '), auto';
+		document.getElementById("side_right").style.cursor = 'url(' + arrow_url + '), auto';
+	}
+	return;
+}
+
+//画像のイベント
+function touch_start(e){
+	e.preventDefault();					// イベントをブラウザーに渡さない
+	touch_flag=1;
+	dist_all = 0;
+	
+	if( e.touches ){ 
+		ss_x=e.touches[0].pageX;	ss_y=e.touches[0].pageY;
+		sm_x=e.touches[0].pageX;	sm_y=e.touches[0].pageY;
+	}
+	else{
+		ss_x=e.clientX;	ss_y=e.clientX;
+		sm_x=e.clientX;	sm_y=e.clientY;
+	}
+	ss_t = sm_t = (+new Date());
+}
+
+function touch_move(e){
+	e.preventDefault();					// イベントをブラウザーに渡さない
+	f_check_cursor(e);
+	if( touch_flag == 0 ){ return; }
+
+	//移動座標分の計算
+	if( e.touches ){
+		var temp_x = e.touches[0].pageX;
+		var temp_y = e.touches[0].pageY;
+	}
+	else{
+		var temp_x = e.clientX;
+		var temp_y = e.clientY;
+	}
+
+	var now = (+new Date());
+	
+	var diff_t = sm_t - now;	
+	var diff_x = sm_x - temp_x;
+	var diff_y = sm_y - temp_y;
+	sm_t = now;
+	
+	var dist_x = Math.abs(temp_x - sm_x); 	// 距離
+	var dist_y = Math.abs(temp_y - sm_y);
+	var temp_dist = Math.sqrt(Math.pow(dist_x, 2) + Math.pow(dist_y, 2));	
+	sm_x = temp_x;	sm_y = temp_y;
+	
+	dist_all += temp_dist;
+	
+	if( rt_zoom != 1 ){
+	
+		pos2 -= diff_x;
+		pos2_y -= diff_y;
+	
+		img_obj[center].style.webkitTransform = "translate3d("+ pos2 +"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.webkitTransition = no_animation;
+	
+		img_obj[center].style.MozTransform = "translate3d("+ pos2 +"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.MozTransition = no_animation;
+		
+		img_obj[center].style.msTransform = "translate3d("+ pos2 +"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.msTransition = no_animation;
+		
+		img_obj[center].style.OTransform = "translate3d("+ pos2 +"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.OTransition = no_animation;
+	}
+
+	return;
+}
+
+function touch_end(){	
+	if( touch_flag == 0 ){ return; }
+	mdown_flg = 0;
+	touch_flag=0;
+
+	//タップ関数へ
+	if( dist_all < 10 ){	tap_func();		return;	}
+}
+
+// タップ関数
+function tap_func(){
+
+	if( rt_zoom != 1 ){
+		var tx = sm_x;	var ty = sm_y;
+		var pos_left = (win_w*(2/5));	var pos_right = ( win_w*(3/5) );
+		
+		if( 0 <= tx && tx < pos_left ){
+			if( OpenLR == 1 ){
+				next_position();
+			}
+			else{
+				prev_position();
+			}
+			return;
+		}
+		else if( pos_right < tx && tx < (win_w)){	
+			if( OpenLR == 1 ){
+				prev_position();
+			}
+			else{
+				next_position();
+			}
+			return;
+		}
+		else{	show_menue();	}
+	}
+	else{
+		var tx = sm_x;	var ty = sm_y;
+		var pos_left = (win_w*(2/5));	var pos_right = ( win_w*(3/5) );
+		if( 0 <= tx && tx < pos_left ){		
+			if( OpenLR == 1 ){
+				if( page == max_page ){	go_renta(); return; }
+			}
+			else{
+				if( page == 1){ return; }
+			}
+			pg_left();
+		}
+		else if( pos_right < tx && tx < (win_w)){	
+			if( OpenLR == 0 ){
+				if( page == max_page ){	go_renta(); return; }
+			}
+			else{
+				if( page == 1 ){ return; }
+			}
+			pg_right();	
+		}
+		else{	show_menue();	}
+	}
+	return;
+}
+
+// 右方向に移動(ページ移動)
+function pg_right(){
+
+	if( OpenLR == 1 ){
+		//最初のページより戻ろうとした場合
+		if( t_flag == 0 && disp_single == 0 ){
+			if( page == 0 ){ 
+				if( wheel_move == 1 ){	wheel_move = 0;	}
+				if( keydown_move == 1 ){	keydown_move = 0;	}
+				return;
+			}
+		}
+		else{
+			if( page == 1 ){ 
+				if( wheel_move == 1 ){	wheel_move = 0;	}
+				if( keydown_move == 1 ){	keydown_move = 0;	}
+				return; 
+			}
+		}
+	}
+	else{
+		//最終ページより先
+		if( t_flag == 0 && disp_single == 0 ){
+			if( page == max_page || page == (max_page-1) ){
+				if( wheel_move == 0 ){
+					go_renta();
+				}
+				else{
+					wheel_move = 0;
+				}
+				return;
+			}
+		}
+		else{
+			if( page == max_page ){
+				if( wheel_move == 0 ){
+					go_renta();
+				}
+				else{
+					wheel_move = 0;
+				}
+				return;
+			}
+		}
+	}
+
+	if( t_lock == 1 ){	return; }
+	t_lock = 1;
+
+	// 一部端末ではタップからの移動時にアニメーションがつかなくなる -> 一瞬遅延させるとうまくいく	
+	setTimeout(function(){	
+		if( rt_zoom != 1 ){
+			// 拡大時、ここでは移動しない		
+		}
+		else{
+			// 移動
+			//-------------------------------------------
+			img_obj[center].style.webkitTransform = "translate3d("+ (space[right]-parseInt(img_obj[center].style.width)-1) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.webkitTransition = no_animation;
+			
+			img_obj[center].style.MozTransform = "translate3d("+ (space[right]-parseInt(img_obj[center].style.width)-1) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.MozTransition = no_animation;
+			
+			img_obj[center].style.msTransform = "translate3d("+ (space[right]-parseInt(img_obj[center].style.width)-1) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.msTransition = no_animation;
+			
+			img_obj[center].style.OTransform = "translate3d("+ (space[right]-parseInt(img_obj[center].style.width)-1) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.OTransition = no_animation;
+			//-------------------------------------------
+
+			//-------------------------------------------		
+			img_obj[right].style.webkitTransform = "translate3d("+ space[right] +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.webkitTransition = no_animation;
+			
+			img_obj[right].style.MozTransform = "translate3d("+ space[right] +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.MozTransition = no_animation;
+			
+			img_obj[right].style.msTransform = "translate3d("+ space[right] +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.msTransition = no_animation;
+			
+			img_obj[right].style.OTransform = "translate3d("+ space[right] +"px,"+ pos3_y +"px, 0)";
+			img_obj[right].style.OTransition = no_animation;
+			//-------------------------------------------
+			
+			// 単ページの場合は、ここでは動かさない
+			if( t_flag == 0 && disp_single == 0 ){
+				right_pos = space[right]+parseInt(img_obj[right].style.width);
+				
+				//-------------------------------------------		
+				img_obj[left].style.webkitTransform = "translate3d("+ (space[right]+parseInt(img_obj[right].style.width)) +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.webkitTransition = no_animation;
+				
+				img_obj[left].style.MozTransform = "translate3d("+ (space[right]+parseInt(img_obj[right].style.width)) +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.MozTransition = no_animation;
+
+				img_obj[left].style.msTransform = "translate3d("+ (space[right]+parseInt(img_obj[right].style.width)) +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.msTransition = no_animation;
+				
+				img_obj[left].style.OTransform = "translate3d("+ (space[right]+parseInt(img_obj[right].style.width)) +"px,"+ pos1_y +"px, 0)";
+				img_obj[left].style.OTransition = no_animation;
+				//-------------------------------------------
+			}
+		}
+		img_set_right();
+	},1);
+}
+
+// 左方向に移動(ページ移動)
+function pg_left(){
+	if( OpenLR == 0 ){
+		//最初のページより戻ろうとした場合
+		if( t_flag == 0 && disp_single == 0 ){
+			if( page == 0 ){ 
+				if( wheel_move == 1 ){	wheel_move = 0;	}
+				if( keydown_move == 1 ){	keydown_move = 0;	}
+				return;
+			}
+		}
+		else{
+			if( page == 1 ){ 
+				if( wheel_move == 1 ){	wheel_move = 0;	}
+				if( keydown_move == 1 ){	keydown_move = 0;	}
+				return;
+			}
+		}
+	}
+	else{
+		//最終ページより先
+		if( t_flag == 0 && disp_single == 0 ){
+			if( page == max_page || page == (max_page-1) ){
+				if( wheel_move == 0 ){
+					go_renta();
+				}
+				else{
+					wheel_move = 0;
+				}
+				return;
+			}
+		}
+		else{
+			if( page == max_page ){
+				if( wheel_move == 0 ){
+					go_renta();
+				}
+				else{
+					wheel_move = 0;
+				}
+				return;
+			}
+		}
+	}
+	if( t_lock == 1 ){	return; }
+	t_lock = 1;
+
+	// 一部端末ではタップからの移動時にアニメーションがつかなくなる -> 一瞬遅延させるとうまくいく
+	setTimeout(function(){
+		if( rt_zoom != 1 ){
+			// 拡大時、ここでは移動しない
+		}
+		else{
+			//　移動
+			//-------------------------------------------		
+			img_obj[center].style.webkitTransform = "translate3d("+ (space[left]+parseInt(img_obj[left].style.width)) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.webkitTransition = no_animation;
+			
+			img_obj[center].style.MozTransform = "translate3d("+ (space[left]+parseInt(img_obj[left].style.width)) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.MozTransition = no_animation;
+			
+			img_obj[center].style.msTransform = "translate3d("+ (space[left]+parseInt(img_obj[left].style.width)) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.msTransition = no_animation;
+			
+			img_obj[center].style.OTransform = "translate3d("+ (space[left]+parseInt(img_obj[left].style.width)) +"px,"+ pos2_y +"px, 0)";
+			img_obj[center].style.OTransition = no_animation;
+			//-------------------------------------------
+			
+			//-------------------------------------------		
+			img_obj[left].style.webkitTransform = "translate3d("+ space[left] +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.webkitTransition = no_animation;
+			
+			img_obj[left].style.MozTransform = "translate3d("+ space[left] +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.MozTransition = no_animation;
+			
+			img_obj[left].style.msTransform = "translate3d("+ space[left] +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.msTransition = no_animation;
+			
+			img_obj[left].style.OTransform = "translate3d("+ space[left] +"px,"+ pos1_y +"px, 0)";
+			img_obj[left].style.OTransition = no_animation;
+			//-------------------------------------------
+			
+			// 単ページの場合は、ここでは動かさない
+			if( t_flag == 0 && disp_single == 0 ){
+				left_pos = space[left]-parseInt(img_obj[right].style.width);
+			
+				//-------------------------------------------
+				img_obj[right].style.webkitTransform = "translate3d("+ (space[left]-parseInt(img_obj[right].style.width)-1) +"px,"+ pos3_y +"px, 0)";
+				img_obj[right].style.webkitTransition = no_animation;
+
+				img_obj[right].style.MozTransform = "translate3d("+ (space[left]-parseInt(img_obj[right].style.width)-1) +"px,"+ pos3_y +"px, 0)";
+				img_obj[right].style.MozTransition = no_animation;
+				
+				img_obj[right].style.msTransform = "translate3d("+ (space[left]-parseInt(img_obj[right].style.width)-1) +"px,"+ pos3_y +"px, 0)";
+				img_obj[right].style.msTransition = no_animation;
+				
+				img_obj[right].style.OTransform = "translate3d("+ (space[left]-parseInt(img_obj[right].style.width)-1) +"px,"+ pos3_y +"px, 0)";
+				img_obj[right].style.OTransition = no_animation;			
+				//-------------------------------------------
+
+			}
+		}
+		img_set_left();
+	},1);
+}
+
+// 拡大時のページ内移動
+function next_position(){
+
+	// 移動先判定
+	
+	if( parseInt(img_obj[center].style.height) > win_h && parseInt(img_obj[center].style.width) < win_w ){
+		// y軸だけの移動を考慮
+		var divide_y = Math.ceil( (parseInt(img_obj[center].style.height) / win_h)*1.5 );
+		var pg_flag = 0;
+		for( var i=1; i<divide_y; i++ ){
+			var set_pos = ( parseInt(img_obj[center].style.height) / divide_y ) * i * -1;
+			if( Math.abs(set_pos) > parseInt(img_obj[center].style.height) - win_h ){
+				set_pos = ( parseInt(img_obj[center].style.height) - win_h ) * -1;
+			}
+			
+			if( Math.abs(set_pos) > Math.abs(pos2_y) ){
+				pos2_y = set_pos;	pg_flag = 1;
+				break;
+			}		
+		}
+		pos2 = (win_w - parseInt(img_obj[center].style.width))/2;
+	}
+	else if( parseInt(img_obj[center].style.height) < win_h && parseInt(img_obj[center].style.width) > win_w ){
+		// x軸だけの移動を考慮
+		var pg_flag = 0;
+		var st = win_w - parseInt(img_obj[center].style.width);
+		var divide_x = Math.ceil( parseInt(img_obj[center].style.width) / win_w );
+		if( divide_x == 1 ){
+			var ar_stepx = new Array(divide_x);
+			ar_stepx[0] = 0;
+			set_idx = 0;
+			pos2 = 0;
+		}
+		else{
+			var step = Math.abs(st/(divide_x-1));
+			var ar_stepx = new Array(divide_x);
+			for( var i=1; i<=divide_x; i++ ){
+				var tmp_pos = st + step*(i-1);
+				if( tmp_pos > 0 ){ tmp_pos = 0; }
+				ar_stepx[i-1] = tmp_pos;
+			}
+
+			// 一番近い箇所にx座標を設定する
+			var set_idx = "";
+			var set_pos = 10000;
+			for( var i=0; i<divide_x; i++ ){
+				var tmp_pos = Math.abs(ar_stepx[i] - pos2);
+				if( set_pos > tmp_pos ){
+					set_pos = tmp_pos;
+					set_idx = i;
+				}
+			}
+			pos2 = ar_stepx[set_idx];
+		}
+		
+		// x軸に対しての移動判定
+		// 右開き用
+		if( pg_flag == 0 && set_idx != (divide_x-1) && OpenLR == 1 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx+1];
+			//pos2_y = 0;
+			pg_flag = 1;
+		}
+		
+		// 左開き用
+		if( pg_flag == 0 && set_idx != 0 && OpenLR == 0 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx-1];
+			//pos2_y = 0;
+			pg_flag = 1;
+		}
+
+		pos2_y = (win_h - parseInt(img_obj[center].style.height))/2;
+	}
+	else{
+	
+		// y軸に対しての移動判定
+		var divide_y = Math.ceil( (parseInt(img_obj[center].style.height) / win_h)*1.5 );
+		var pg_flag = 0;
+		for( var i=1; i<divide_y; i++ ){
+			var set_pos = ( parseInt(img_obj[center].style.height) / divide_y ) * i * -1;
+			if( Math.abs(set_pos) > parseInt(img_obj[center].style.height) - win_h ){
+				set_pos = ( parseInt(img_obj[center].style.height) - win_h ) * -1;
+			}
+			
+			if( Math.abs(set_pos) > Math.abs(pos2_y) ){
+				pos2_y = set_pos;	pg_flag = 1;
+				break;
+			}		
+		}
+
+		// x軸に対しての移動箇所の決定
+		var st = win_w - parseInt(img_obj[center].style.width);
+		var divide_x = Math.ceil( parseInt(img_obj[center].style.width) / win_w );
+		if( divide_x == 1 ){
+			var ar_stepx = new Array(divide_x);
+			ar_stepx[0] = 0;
+			set_idx = 0;
+			pos2 = 0;
+		}
+		else{
+			var step = Math.abs(st/(divide_x-1));
+			var ar_stepx = new Array(divide_x);
+			for( var i=1; i<=divide_x; i++ ){
+				var tmp_pos = st + step*(i-1);
+				if( tmp_pos > 0 ){ tmp_pos = 0; }
+				ar_stepx[i-1] = tmp_pos;
+			}
+
+			// 一番近い箇所にx座標を設定する
+			var set_idx = "";
+			var set_pos = 10000;
+			for( var i=0; i<divide_x; i++ ){
+				var tmp_pos = Math.abs(ar_stepx[i] - pos2);
+				if( set_pos > tmp_pos ){
+					set_pos = tmp_pos;
+					set_idx = i;
+				}
+			}
+			pos2 = ar_stepx[set_idx];
+		}
+
+		// x軸に対しての移動判定
+		// 右開き用
+		if( pg_flag == 0 && set_idx != (divide_x-1) && OpenLR == 1 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx+1];
+			pos2_y = 0;
+			pg_flag = 1;
+		}
+		
+		// 左開き用
+		if( pg_flag == 0 && set_idx != 0 && OpenLR == 0 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx-1];
+			pos2_y = 0;
+			pg_flag = 1;
+		}
+
+	}
+	
+	if( pg_flag == 0 ){
+		// 次ページ or 前ページへの移動
+		if( OpenLR == 1 ){
+			pg_left();
+		}
+		else{
+			pg_right();
+		}
+		setTimeout( function(){
+			wheel_move = 0;
+		},200);
+	}
+	else{
+		// ページ内移動
+		img_obj[center].style.webkitTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.webkitTransition = m_animation;
+
+		img_obj[center].style.MozTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.MozTransition = m_animation;
+		
+		img_obj[center].style.msTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.msTransition = m_animation;
+		
+		img_obj[center].style.OTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.OTransition = m_animation;
+		
+		setTimeout( function(){
+			wheel_move = 0;
+		},200);
+	}
+	
+	ar_stepx = null;
+	return;
+}
+
+// 拡大時のページ内移動
+function prev_position(){
+
+	// 移動先判定
+	
+	if( parseInt(img_obj[center].style.height) > win_h && parseInt(img_obj[center].style.width) < win_w ){
+		// y軸だけの移動を考慮
+		var divide = Math.ceil( (parseInt(img_obj[center].style.height) / win_h)*1.5 );
+		var pg_flag = 0;
+		for( var i=divide-1; i>=0; i-- ){
+			var set_pos = ( parseInt(img_obj[center].style.height) / divide ) * i * -1;
+			if( set_pos < (parseInt(img_obj[center].style.height) - win_h) * -1 ){
+				set_pos = ( parseInt(img_obj[center].style.height) - win_h ) * -1;
+			}
+			
+			if( set_pos > pos2_y ){
+				pos2_y = set_pos;	pg_flag = 1;
+				break;
+			}
+		}
+		
+		pos2 = (win_w - parseInt(img_obj[center].style.width))/2;
+	}
+	else if( parseInt(img_obj[center].style.height) < win_h && parseInt(img_obj[center].style.width) > win_w ){
+		// x軸だけの移動を考慮
+		var pg_flag = 0;
+		var st = win_w - parseInt(img_obj[center].style.width);
+		var divide_x = Math.ceil( parseInt(img_obj[center].style.width) / win_w );
+		if( divide_x == 1 ){
+			var ar_stepx = new Array(divide_x);
+			ar_stepx[0] = 0;
+			set_idx = 0;
+			pos2 = 0;
+		}
+		else{
+			var step = Math.abs(st/(divide_x-1));
+			var ar_stepx = new Array(divide_x);
+			for( var i=1; i<=divide_x; i++ ){
+				var tmp_pos = st + step*(i-1);
+				if( tmp_pos > 0 ){ tmp_pos = 0; }
+				ar_stepx[i-1] = tmp_pos;
+			}
+
+			var set_idx = "";
+			var set_pos = 10000;
+			for( var i=0; i<divide_x; i++ ){
+				var tmp_pos = Math.abs(ar_stepx[i] - pos2);
+				if( set_pos > tmp_pos ){
+					set_pos = tmp_pos;
+					set_idx = i;
+				}
+			}
+			pos2 = ar_stepx[set_idx];
+		}
+
+		// x軸の移動判定
+		// 右開き用
+		if( pg_flag == 0 && set_idx != 0 && OpenLR == 1 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx-1];
+			//pos2_y = win_h - parseInt(img_obj[center].style.height);
+			pg_flag = 1;
+		}
+		
+		// 左開き用
+		if( pg_flag == 0 && set_idx != (divide_x-1) && OpenLR == 0 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx+1];
+			//pos2_y = win_h - parseInt(img_obj[center].style.height);
+			pg_flag = 1;
+		}
+		
+		pos2_y = (win_h - parseInt(img_obj[center].style.height))/2;
+	}
+	else{
+		// y軸に対しての移動判定
+		var divide = Math.ceil( (parseInt(img_obj[center].style.height) / win_h)*1.5 );
+		var pg_flag = 0;
+		for( var i=divide-1; i>=0; i-- ){
+			var set_pos = ( parseInt(img_obj[center].style.height) / divide ) * i * -1;
+			if( set_pos < (parseInt(img_obj[center].style.height) - win_h) * -1 ){
+				set_pos = ( parseInt(img_obj[center].style.height) - win_h ) * -1;
+			}
+			
+			if( set_pos > pos2_y ){
+				pos2_y = set_pos;	pg_flag = 1;
+				break;
+			}
+		}
+
+		// x軸に対しての移動判定
+		var st = win_w - parseInt(img_obj[center].style.width);
+		var divide_x = Math.ceil( parseInt(img_obj[center].style.width) / win_w );
+		if( divide_x == 1 ){
+			var ar_stepx = new Array(divide_x);
+			ar_stepx[0] = 0;
+			set_idx = 0;
+			pos2 = 0;
+		}
+		else{
+			var step = Math.abs(st/(divide_x-1));
+			var ar_stepx = new Array(divide_x);
+			for( var i=1; i<=divide_x; i++ ){
+				var tmp_pos = st + step*(i-1);
+				if( tmp_pos > 0 ){ tmp_pos = 0; }
+				ar_stepx[i-1] = tmp_pos;
+			}
+
+			var set_idx = "";
+			var set_pos = 10000;
+			for( var i=0; i<divide_x; i++ ){
+				var tmp_pos = Math.abs(ar_stepx[i] - pos2);
+				if( set_pos > tmp_pos ){
+					set_pos = tmp_pos;
+					set_idx = i;
+				}
+			}
+			pos2 = ar_stepx[set_idx];
+		}
+
+		// x軸の移動判定
+		// 右開き用
+		if( pg_flag == 0 && set_idx != 0 && OpenLR == 1 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx-1];
+			pos2_y = win_h - parseInt(img_obj[center].style.height);
+			pg_flag = 1;
+		}
+		
+		// 左開き用
+		if( pg_flag == 0 && set_idx != (divide_x-1) && OpenLR == 0 ){
+			// x軸の移動+y軸初期位置に設定
+			pos2 = ar_stepx[set_idx+1];
+			pos2_y = win_h - parseInt(img_obj[center].style.height);
+			pg_flag = 1;
+		}
+	}
+	
+	if( pg_flag == 0 ){
+		if( OpenLR == 1 ){	
+			pg_right();
+		}
+		else{
+			pg_left();
+		}
+		setTimeout( function(){
+			wheel_move = 0;
+		},200);
+	}
+	else{
+		img_obj[center].style.webkitTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.webkitTransition = m_animation;	
+		
+		img_obj[center].style.MozTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.MozTransition = m_animation;
+		
+		img_obj[center].style.msTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.msTransition = m_animation;
+
+		img_obj[center].style.OTransform = "translate3d("+pos2+"px,"+ pos2_y +"px, 0)";
+		img_obj[center].style.OTransition = m_animation;
+		
+		setTimeout( function(){
+			wheel_move = 0;
+		},200);
+	}
+	
+	ar_stepx = null;
+	return;
+}
+
+// 拡大、縮小の誘導
+function f_zoom(zoom_val){
+
+	var tmp_zoom = rt_zoom;
+	console.log(rt_zoom);
+	if( zoom_val == 0 ){
+		// 縮小
+		if( rt_zoom == 1 ){ return; }
+		if( rt_zoom < 1 ){ ch_zoom(1,0,0,0); return; }
+		tmp_zoom -= 0.5;
+	}
+	else{
+		if( rt_zoom >= 5 ){ return; }
+		tmp_zoom += 0.5;
+	}
+
+	ch_zoom(tmp_zoom,0,0,0);
+
+	return;
+}
+
+//　拡縮変更
+function ch_zoom(scale,x,y,ng_move){		//拡大・縮小処理
+
+	img_vw = win_w*scale;
+	img_vh = win_h*scale;
+	
+	if( vh_flag[center] == 1 ){		//画像縦サイズがウィンドウ縦サイズより大きい場合縦フィットの１枚画像
+		var width = img_vh*img_rate[center];
+		img_obj[center].style.width = width;
+		img_obj[center].style.height = img_vh;
+	}
+	else{
+		var height = img_vw*img_rate[center];
+		img_obj[center].style.width = img_vw;
+		img_obj[center].style.height = height;
+	}
+	
+	if( vh_flag[left] == 1 ){		//画像縦サイズがウィンドウ縦サイズより大きい場合縦フィットの１枚画像
+		var width = img_vh*img_rate[left];
+		img_obj[left].style.width = width;
+		img_obj[left].style.height = img_vh;
+	}
+	else{
+		var height = img_vw*img_rate[left];
+		img_obj[left].style.width = img_vw;
+		img_obj[left].style.height = height;
+	}
+	
+	if( vh_flag[right] == 1 ){		//画像縦サイズがウィンドウ縦サイズより大きい場合縦フィットの１枚画像
+		var width = img_vh*img_rate[right];
+		img_obj[right].style.width = width;
+		img_obj[right].style.height = img_vh;
+	}
+	else{
+		var height = img_vw*img_rate[right];
+		img_obj[right].style.width = img_vw;
+		img_obj[right].style.height = height;
+	}
+	
+	rt_zoom = scale;	//更新
+	if( rt_zoom != 1 ){
+		//右開き
+		if( OpenLR == 1 ){
+			pos2 = win_w - parseInt(img_obj[center].style.width);
+			pos2_y = 0;
+		}
+		else{
+			pos2 = 0;
+			pos2_y = 0;
+		}
+		
+		if( parseInt(img_obj[center].style.height) > win_h && parseInt(img_obj[center].style.width) < win_w ){
+			// y移動だけ x座標を中央寄せ
+			pos2 = (win_w - parseInt(img_obj[center].style.width))/2;
+		}
+		else if( parseInt(img_obj[center].style.height) < win_h && parseInt(img_obj[center].style.width) > win_w ){
+			// x移動だけ y座標を中央寄せ
+			pos2_y = (win_h - parseInt(img_obj[center].style.height))/2;
+		}
+		
+	}
+	else{
+		pos2 = space[center];
+		pos2_y = t_space[center];
+	}
+	
+	if( rt_zoom > 1 ){
+		document.getElementById("side_left").style.visibility = 'hidden';
+		document.getElementById("side_right").style.visibility = 'hidden';
+	}
+	else{
+		//幕の位置調整(拡大状態でページを跨ぐとずれるので縮小したい際に再度調整)
+		var side_left = document.getElementById('side_left');
+		var side_right = document.getElementById('side_right');
+		
+		if( space[center] > t_space[center] ){				//横幕
+			side_left.style.left = 0;				side_left.style.top = 0 + padding_top;
+			side_left.style.width = space[center];	side_left.style.height = win_h;
+
+			side_right.style.left = parseInt(img_obj[center].style.width)+space[center];	side_right.style.top = 0 + padding_top;
+			side_right.style.width = space[center];											side_right.style.height = win_h;
+			var temp_width = parseInt(side_right.style.width) + parseInt(side_left.style.width) + parseInt(img_obj[center].style.width);	
+			var diff = win_w - temp_width;
+			if( diff != 0 ){	side_right.style.width = space[center]+diff;	}
+						
+		}
+		else{												//縦幕
+			side_left.style.left = 0;		side_left.style.top = 0 + padding_top;
+			side_left.style.width = win_w;	side_left.style.height = t_space[center];			
+			
+			side_right.style.left = 0;		side_right.style.top = t_space[center]+parseInt(img_obj[center].style.height) + padding_top;
+			side_right.style.width = win_w;	side_right.style.height = t_space[center];	
+			
+			var temp_height = parseInt(side_right.style.height) + parseInt(side_left.style.height) + parseInt(img_obj[center].style.height);	
+			var diff = win_h - temp_height;
+			if( diff != 0 ){	side_right.style.height = t_space[center]+diff;	}
+		}
+	
+	
+		document.getElementById("side_left").style.visibility='visible';
+		document.getElementById("side_right").style.visibility='visible';
+	}
+
+	// 左右の画像の位置
+	pos1_y = t_space[left];
+	pos3_y = t_space[right];
+	
+	if( ng_move == 0 ){
+		//-----------------------------------------------------
+		img_obj[center].style.webkitTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.webkitTransition = no_animation;
+		
+		img_obj[center].style.MozTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.MozTransition = no_animation;
+
+		img_obj[center].style.msTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.msTransition = no_animation;
+		
+		img_obj[center].style.OTransform = "translate3d("+pos2+"px,"+pos2_y+"px, 0)";
+		img_obj[center].style.OTransition = no_animation;
+		//-----------------------------------------------------
+		
+		if( rt_zoom == 1 ){
+			img_obj[right].style.visibility='visible';
+			img_obj[left].style.visibility='visible';
+		}
+		else{
+			img_obj[right].style.visibility='hidden';
+			img_obj[left].style.visibility='hidden';		
+		}
+	}
+	
+	return;
+}
+
+// メニュー表示/非表示
+function show_menue(){
+	if( document.getElementById('page_bar').style.visibility == 'hidden' ) {
+		document.getElementById('page_bar').style.visibility = 'visible';
+	}
+	else {
+		document.getElementById('page_bar').style.visibility  = 'hidden';
+	}
+	
+	if( rt_zoom == 1 ){
+		setTimeout(function(){
+			set_init();
+		},100);
+	}
+	else{
+		// 位置だけ戻す
+		win_w = Math.ceil(window.innerWidth);
+		win_h = Math.ceil(window.innerHeight);
+		
+		if( document.getElementById('page_bar').style.visibility == "visible" ){
+			padding_top = bar_h;
+			win_h -= padding_top;
+			document.body.style.paddingTop = padding_top + "px";
+		}
+		else{
+			padding_top = 0;
+			document.body.style.paddingTop = "0px";
+		}
+		
+		document.getElementById("view").style.width = win_w+"px";
+		document.getElementById("view").style.height = win_h+"px";	
+	}
+
+	return;
+}
+
+// キャプチャ画像追跡のための透かしデータを作成
+function make_sukasi() {
+
+	for( i=0; i<6; i++ ){
+		var id = "sukasi"+i;
+		sukasi_canvas[i] = document.getElementById(id);
+		sukasi_ctx[i] = sukasi_canvas[i].getContext('2d');
+		if( user_id == "sample" ){
+			sukasi_canvas[i].width = 1;
+			sukasi_canvas[i].height = 1;
+		}
+		else{
+			sukasi_canvas[i].height = 4;
+			sukasi_canvas[i].width = (user_id.length+2)*4;
+		}
+	}
+	if( user_id == "sample" ){ return; }
+
+	// ユーザIDを1文字ずつロードして配置
+	// 関数を分けないと上手くいかない？
+	var sukasi_id = "D"+user_id+"E";
+	for( j=0; j<sukasi_id.length; j++ ){
+		var s = sukasi_id.substr(j,1);
+		load_sukasi(s,j,sukasi_ctx);
+	}
+	return;
+}
+
+// 透かし画像のロード
+function load_sukasi( s, n, ctx ){
+	var sukasi_img = new Image();
+	if( s=="D" )		{ sukasi_img.src = url_base+"13.png"; }
+	else if( s=="E")	{ sukasi_img.src = url_base+"14.png"; }
+	else				{ sukasi_img.src = url_base+"0"+s+".png"; }
+	sukasi_img.onload = function() {
+		sukasi_ctx[0].drawImage(sukasi_img, n*4, 0);
+		sukasi_ctx[1].drawImage(sukasi_img, n*4, 0);
+		sukasi_ctx[2].drawImage(sukasi_img, n*4, 0);
+		sukasi_ctx[3].drawImage(sukasi_img, n*4, 0);
+		sukasi_ctx[4].drawImage(sukasi_img, n*4, 0);
+		sukasi_ctx[5].drawImage(sukasi_img, n*4, 0);
+	}
+	return;
+}
+
+// 目次選択でのページ移動
+function change_chapter(e){
+	var index = e.selectedIndex;
+	var value = e.options[index].value;
+
+	// selectのフォーカスを外す
+	document.getElementById("mokuji").blur(); 
+
+	page_back = page;
+	page = parseInt(value);
+	set_init();
+}
+
+// 閉じる
+function end_view(){
+	if( en_flag == "1" ){
+		if( window.confirm("Finish Viewing?") ){
+			if( window.history.length == 1 ){	window.close();	}
+			else{ 	window.history.back();	}
+		}
+	}
+	else{
+		if( window.confirm("閲覧を終了しますか?") ){
+			if( window.history.length == 1 ){	window.close();	}
+			else{ 	window.history.back();	}
+		}
+	}
+	return;
+}
+
+// サイトへの遷移
+function go_renta(){
+
+	if( keydown_move == 1 || wheel_move == 1 ){
+		t_lock = 1;
+	
+		keydown_move = 0;
+		wheel_move = 0;
+	
+		$('html').addClass('lock');
+
+		var st = $(window).scrollTop();
+		var w = $(window).width();
+		var h = $(window).height()
+		
+		$('#black').show().height(h).width(w).css({top:st});
+		$('#confirm_window_wrap').show().height(h).width(w).css({top : st});
+	
+	}
+	else{
+		if( !window.opener ){
+			location.replace(url_jump);
+		}
+		else{
+			if (navigator.userAgent.search("MSIE") != -1) {	window.close(); }
+			else if(navigator.userAgent.search("Edge") != -1){
+				window.opener.location.href= url_jump; window.close();
+			}
+			else{ window.open(url_jump,'_blank'); window.close(); }
+		}
+	}
+
+	return;
+}
+
+function go_home(){
+	var url_return = "http://renta.papy.co.jp";	// 飛び先
+	if( rt_id == "FIX003" ){
+		url_return = "http://www.papy.co.jp/act/top/";
+	}
+	
+	if( !window.opener ){
+		location.replace(url_return);
+	}
+	else{
+		if (navigator.userAgent.search("MSIE") != -1) {	window.close(); }
+		else if(navigator.userAgent.search("Edge") != -1){
+			window.opener.location.href= url_return; window.close();
+		}
+		else{ window.open(url_return,'_blank'); window.close(); }
+	}
+
+	return;
+}
+
+//　先読み関数
+/*
+function PreLoad(){
+	
+	var tmp = parseInt(page + 10);
+	if( 0 < tmp && tmp <= max_page ) {
+
+		if( load_lock == 1 ){ return; }
+		load_lock = 1;
+
+		// 配列にまだ入っているページデータだった場合は抜ける
+		var ng_load = 0;
+		for( var i=0; i<max_data_len; i++ ){
+			if( ar_load_data_number[i] == tmp ){
+				ng_load = 1;
+				break;
+			}
+		}
+		if( ng_load == 1 ){ 
+			load_lock = 0;
+			return;
+		}
+		
+		//var data_url = url_base + tmp + "?type=" + cnts_type;
+		var data_url = url_base2 + tmp;
+		data_url = add_param(data_url);
+		pre_xhr.open("GET", data_url, true);
+		pre_xhr.responseType = "arraybuffer";
+		//pre_xhr.overrideMimeType('text/plain; charset=x-user-defined');
+		pre_xhr.onreadystatechange = function(e){
+			if( e.target.readyState == 4 ){
+				if( e.target.status == 200 ){
+					var res = e.target.response;
+					ar_load_data[now_load_pos] = res;
+					ar_load_data_number[now_load_pos] = parseInt(page + 10);
+					now_load_pos++;
+					if(now_load_pos >= max_data_len){
+						now_load_pos = 0;
+					}
+					
+					//--------------------------------------------
+					if( t_flag == 0 && disp_single == 0 ){				
+						var tmp = parseInt(page + 11);
+						if( 0 < tmp && tmp <= max_page ) {
+							var ng_load = 0;
+							for( var i=0; i<max_data_len; i++ ){
+								if( ar_load_data_number[i] == tmp ){
+									ng_load = 1;
+									break;
+								}
+							}
+							if( ng_load == 1 ){ 
+								load_lock = 0;
+								return;
+							}
+							
+							//var data_url2 = url_base + tmp + "?type=" + cnts_type;
+							var data_url2 = url_base + tmp;
+							data_url2 = add_param(data_url2);
+							pre2_xhr.open("GET", data_url2, true);
+							pre2_xhr.responseType = "arraybuffer";
+							//pre2_xhr.overrideMimeType('text/plain; charset=x-user-defined');
+							pre2_xhr.onreadystatechange = function(e){
+								if( e.target.readyState == 4 ){
+									if( e.target.status == 200 ){
+										var res = e.target.response;
+										ar_load_data[now_load_pos] = res;
+										ar_load_data_number[now_load_pos] = parseInt(page + 11);
+										now_load_pos++;
+										if(now_load_pos >= max_data_len){
+											now_load_pos = 0;
+										}
+										load_lock = 0;
+									}
+									else{
+										load_lock = 0;
+									}
+								}
+							};
+
+							//pre2_xhr.setRequestHeader('Pragma', 'no-cache');                                 // HTTP/1.0 における汎用のヘッダフィールド
+							//pre2_xhr.setRequestHeader('Cache-Control', 'no-cache');                          // HTTP/1.1 におけるキャッシュ制御のヘッダフィールド
+							//pre2_xhr.setRequestHeader('If-Modified-Since', 'Thu, 01 Jun 1970 00:00:00 GMT'); //　これつけないとキャッシュから取得してしまう
+							//pre2_xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');					// 
+							pre2_xhr.withCredentials = true;
+							pre2_xhr.send();
+						}
+						else{
+							load_lock = 0;
+						}
+					}
+					else{
+						load_lock = 0;
+					}
+					//--------------------------------------------
+				}
+				else{
+					load_lock = 0;
+				}
+			}
+		};
+
+		//pre_xhr.setRequestHeader('Pragma', 'no-cache');                                 // HTTP/1.0 における汎用のヘッダフィールド
+		//pre_xhr.setRequestHeader('Cache-Control', 'no-cache');                          // HTTP/1.1 におけるキャッシュ制御のヘッダフィールド
+		//pre_xhr.setRequestHeader('If-Modified-Since', 'Thu, 01 Jun 1970 00:00:00 GMT'); //　これつけないとキャッシュから取得してしまう
+		//pre_xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');					// 
+		pre_xhr.withCredentials = true;
+		pre_xhr.send();
+	}
+	
+	return ;
+}
+*/
+
+// キーボード操作関数
+function f_on_keydown(e){
+	if( !e ){ e = window.event; }
+	if( e.keyCode == 122 ){	return; }		//F11キーは許可
+	e.preventDefault();
+	
+	keydown_move = 1;
+	if( rt_zoom != 1 ){
+		// 通常倍率時
+		if( OpenLR==1 ){
+			if ( ( e.keyCode == 37 ) || ( e.keyCode == 40 ) || ( e.keyCode == 32 ) ) {	// 左下
+				next_position();
+			}
+			if ( ( e.keyCode == 39 ) || ( e.keyCode == 38 ) ) {	// 右上
+				prev_position();
+			}
+		}
+		else{
+			if ( ( e.keyCode == 37 ) || ( e.keyCode == 40 ) || ( e.keyCode == 32 ) ) {	// 左下
+				prev_position();
+			}
+			if ( ( e.keyCode == 39 ) || ( e.keyCode == 38 ) ) {	// 右上
+				next_position();
+			}
+		}
+	}
+	else{
+		// 通常倍率時
+		if( OpenLR==1 ){
+			if ( ( e.keyCode == 37 ) || ( e.keyCode == 40 ) || ( e.keyCode == 32 ) ) {	// 左下
+				pg_left();
+			}
+			if ( ( e.keyCode == 39 ) || ( e.keyCode == 38 ) ) {	// 右上
+				pg_right();
+			}
+		}
+		else{
+			if ( ( e.keyCode == 37 ) || ( e.keyCode == 38 ) ) {	// 左上
+				pg_left();
+			}
+			if ( ( e.keyCode == 39 ) || ( e.keyCode == 40 ) || ( e.keyCode == 32 ) ) {	// 右下、スペース
+				pg_right();
+			}
+		}
+	}
+	return;
+}
+
+// ホイール操作関数
+function f_wheel(e){
+	e.preventDefault();
+	if( wheel_move == 1 ){ return; }
+	if( t_lock == 1 ){ return; }
+
+	var v_delta = 0;
+	if (e.wheelDelta){ v_delta = e.wheelDelta/120; }
+	else if (e.detail){ v_delta = e.detail / -3; }
+	if( rt_zoom != 1 ){
+		if(v_delta){
+			wheel_move = 1;
+			// 右開き
+			if( v_delta < 0 ){	// 下
+				next_position();
+			}
+			else{				// 上
+				prev_position();
+			}
+		}
+	}
+	else{
+		if(v_delta){
+			wheel_move = 1;
+			if( OpenLR==1 ){
+				if( v_delta < 0 ){	// 下
+					pg_left();
+				}	
+				else {				// 上
+					pg_right();
+				}				
+			}
+			else{
+				if( v_delta < 0 ){ 	// 下
+					pg_right(); 
+				}
+				else { 				// 上
+					pg_left();
+				}
+			}
+		}
+	}
+	return;
+}
+
+// 印刷時の処理
+function f_print(){
+
+	// 印刷許可がないコンテンツは抜ける
+	if( print_flag == 0 ){ return; }
+
+	document.getElementById("div_view2").style.visibility = "visible";
+	document.getElementById("div_view1").style.visibility = "visible";
+	
+	var dom = document.getElementById("img_"+center);
+	if( t_flag == 0 && disp_single == 0 ){
+		document.getElementById("div_view1").style.display = "block";
+		document.getElementById("div_view2").style.display = "block";
+	
+		if( OpenLR == 1 ){
+			var print_dom = document.getElementById("view2");
+			var print_ctx = print_dom.getContext("2d");
+
+			var print_dom2 = document.getElementById("view1");
+			var print_ctx2 = print_dom2.getContext("2d");
+		}
+		else{
+			var print_dom = document.getElementById("view1");
+			var print_ctx = print_dom.getContext("2d");
+
+			var print_dom2 = document.getElementById("view2");
+			var print_ctx2 = print_dom2.getContext("2d");
+		}
+		
+		if( page == 0 ){
+			document.getElementById("div_view1").style.display = "none";
+			
+			print_dom2.width = dom.width/2;
+			print_dom2.height = dom.height;
+			print_ctx2.drawImage(dom,dom.width/2,0,dom.width/2,dom.height,0,0,dom.width/2,dom.height);
+			
+			var rate = print_dom2.height/print_dom2.width;
+			if( rate >= 1.415 ){
+				print_dom2.style.height = "auto";
+				print_dom2.style.width = "100%";
+			}
+			else{
+				print_dom2.style.height = "auto";
+				print_dom2.style.width = "100%";
+			}
+		}
+		else{
+			print_dom.width = dom.width/2;
+			print_dom.height = dom.height;
+			print_ctx.drawImage(dom,0,0,dom.width/2,dom.height,0,0,dom.width/2,dom.height);
+			
+			var rate = print_dom.height/print_dom.width;
+			if( rate >= 1.415 ){
+				print_dom.style.height = "100%";
+				print_dom.style.width = "auto";
+			}
+			else{
+				print_dom.style.height = "auto";
+				print_dom.style.width = "100%";
+			}
+
+			print_dom2.width = dom.width/2;
+			print_dom2.height = dom.height;
+			print_ctx2.drawImage(dom,dom.width/2,0,dom.width/2,dom.height,0,0,dom.width/2,dom.height);
+			
+			var rate = print_dom2.height/print_dom2.width;
+			if( rate >= 1.415 ){
+				print_dom2.style.height = "auto";
+				print_dom2.style.width = "100%";
+			}
+			else{
+				print_dom2.style.height = "auto";
+				print_dom2.style.width = "100%";
+			}
+
+		}
+	}
+	else{
+		document.getElementById("div_view2").style.display = "none";
+	
+		var print_dom = document.getElementById("view1");
+		var print_ctx = print_dom.getContext("2d");
+
+		print_dom.width = dom.width;
+		print_dom.height = dom.height;
+		print_ctx.drawImage(dom,0,0,dom.width,dom.height,0,0,dom.width,dom.height);
+
+		var rate = print_dom.height/print_dom.width;
+		if( rate >= 1.415 ){
+			print_dom.style.height = "100%";
+			print_dom.style.width = "auto";
+		}
+		else{
+			print_dom.style.height = "auto";
+			print_dom.style.width = "100%";
+		}
+	}
+	
+	var tmp_h = document.body.style.paddingTop;
+	document.body.style.paddingTop = "0px";
+
+	window.print();
+
+	// 高さ戻す
+	document.body.style.paddingTop = tmp_h;
+	
+	// プリントのイベント呼び出し後は隠す
+	document.getElementById("div_view2").style.visibility = "hidden";
+	document.getElementById("div_view1").style.visibility = "hidden";
+	
+	return;
+}
+
+
+// 栞更新
+function set_bookmark(){
+	if( b_timer != null ) { 
+		clearTimeout(b_timer);
+		b_timer = null;
+ 	}
+	
+	b_timer = setTimeout( function(){
+		if( user_id == "sample" ){ return; }
+		if( user_id == "0" ){ return; }
+		if( page != set_page ){
+			set_page = page;
+			if( set_page == 0 ){ set_page = 1; }
+			
+			/*
+			var url = url_base + "bookmark_" + set_page;
+			set_xhr.open('GET', url, true);
+			set_xhr.onreadystatechange = function(e){
+				if( e.target.readyState == 4 && e.target.status == 200 ){
+				}
+			};
+			set_xhr.setRequestHeader('Pragma', 'no-cache');                                 // HTTP/1.0 における汎用のヘッダフィールド
+			set_xhr.setRequestHeader('Cache-Control', 'no-cache');                          // HTTP/1.1 におけるキャッシュ制御のヘッダフィールド
+			set_xhr.setRequestHeader('If-Modified-Since', 'Thu, 01 Jun 1970 00:00:00 GMT');			
+			set_xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');					// 
+			set_xhr.send();
+			*/
+
+			var url = url_bookmark + set_page;
+			set_xhr.open('GET', url, true);
+			set_xhr.onreadystatechange = function(e){
+				if( e.target.readyState == 4 && e.target.status == 200 ){
+				}
+			};
+			//set_xhr.setRequestHeader('Pragma', 'no-cache');                                 // HTTP/1.0 における汎用のヘッダフィールド
+			//set_xhr.setRequestHeader('Cache-Control', 'no-cache');                          // HTTP/1.1 におけるキャッシュ制御のヘッダフィールド
+			//set_xhr.setRequestHeader('If-Modified-Since', 'Thu, 01 Jun 1970 00:00:00 GMT');			
+			//set_xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');					// 
+			set_xhr.withCredentials = true;
+			set_xhr.send();
+			
+			
+		}
+		return;	
+	},1000);
+}
+
+function left_btn(){
+	if( rt_zoom != 1 ){
+		if( OpenLR == 1 ){
+			next_position();
+		}
+		else{
+			prev_position();
+		}
+	}
+	else{
+		pg_left();
+	}
+	return;
+}
+
+function right_btn(){
+	if( rt_zoom != 1 ){
+		if( OpenLR == 1 ){
+			prev_position();
+		}
+		else{
+			next_position();
+		}
+	}
+	else{
+		pg_right();
+	}
+	return;
+}
+
+function f_confirm_ng(){
+	t_lock = 0;
+	$("#confirm_window_wrap,#black").hide();
+	$('html').removeClass('lock');
+}
+
+function f_confirm_ok(){
+	t_lock = 0;
+	go_renta();
+	return;
+}
+
+// 直前のリンク先に戻る機能
+function f_page_back(){
+	
+	if( page_back == -1 ){ return; }
+
+	var load_obj = document.getElementById("loading_block");
+	load_obj.style.display = "block";
+	var lh = load_obj.offsetHeight;
+	var lw = load_obj.offsetWidth;	
+	load_obj.style.top = (Math.ceil(window.innerHeight) - lh)/2 + "px";
+	load_obj.style.left = (Math.ceil(window.innerWidth) - lw)/2 + "px";		
+	setTimeout(function(){
+		page = page_back;
+		page_back = -1;
+		set_init();
+	},100);
+
+	return;
+}
+
+var key_update_cnt = 0;
+var papy_flag = 0;
+
+// 認証キーの更新リクエスト
+function f_update_key(){
+
+	if( papy_flag == 1 ){ return; }
+
+	if( key_update_cnt != 0 ){
+		url_base2 = url_base2_papy;
+		auth_key = auth_key_papy;
+		papy_flag = 1;
+		set_init();
+		return;
+	}
+
+	if( update_lock == 1 ){ return; }
+	update_lock = 1;
+
+	var url = url_base + "update_key?cdn="+viewer_mode;
+	if( viewer_mode == "aws" ){
+		url += "&edge=" + edge;
+	}
+	
+	update_xhr.open('GET', url, true);
+	update_xhr.onreadystatechange = function(e){
+		if( e.target.readyState == 4 ){
+		
+			update_lock = 0;
+		
+			if( e.target.status == 200 ){
+				var res = e.target.responseText;
+				if( res.search(/outputerr_/) != -1 ){
+					//alert("セッションキーの更新に失敗しました。<br>お手数ですが、サイトより再度閲覧をお試し下さい。");
+				}
+				else{
+					// keyを更新して初期化
+					key_update_cnt++;
+					auth_key = res;
+					set_init();
+				}
+				return;
+			}
+			else{
+				//alert("セッションキーの更新に失敗しました。<br>お手数ですが、サイトより再度閲覧をお試し下さい。");
+				return;
+			}
+		}
+	};
+	update_xhr.setRequestHeader('Pragma', 'no-cache');                                 // HTTP/1.0 における汎用のヘッダフィールド
+	update_xhr.setRequestHeader('Cache-Control', 'no-cache');                          // HTTP/1.1 におけるキャッシュ制御のヘッダフィールド
+	update_xhr.setRequestHeader('If-Modified-Since', 'Thu, 01 Jun 1970 00:00:00 GMT');			
+	update_xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');					// 
+	update_xhr.send();
+}
+
+function chk_size(){
+
+	var chk_xhr = new XMLHttpRequest();
+	var chk_page = 1;
+	var data1_url = url_base2 + chk_page;
+	data1_url = add_param(data1_url);
+	
+	chk_xhr.open("GET", data1_url, true);
+	chk_xhr.responseType = "arraybuffer";
+	chk_xhr.onreadystatechange = function(e){
+		if( e.target.readyState == 4 && e.target.status == 200 ){
+			var res = e.target.response;
+			var cdata1 = new Uint8Array(res);
+
+			if( cdata1 != "" ){
+				var idx_len = "";
+				for (var i = 0; i < 9; i++){
+					idx_len += String.fromCharCode(cdata1[i]);
+				}
+				idx_len = parseInt(idx_len,10);
+
+				var idx = "";
+				if( isNaN(idx_len) ){
+					cdata1 = "";
+				}
+				else{
+					for (var i = 9; i < (idx_len+9); i++){
+						idx += String.fromCharCode(cdata1[i]);
+					}
+					
+					var ar_idx = idx.split("|");
+					data1_w = ar_idx[0];
+					data1_h = ar_idx[1];
+					
+					if( data1_w > 1000 ){
+						disp_single = 1;
+					}
+					
+					set_init();
+				}
+			}
+		}
+	};
+	chk_xhr.withCredentials = true;
+	chk_xhr.send();
+	
+	return true;
+}
+
+function get_cookie( key ){
+	var buf = document.cookie + ";";
+	var i1 = buf.indexOf( key, 0 );
+	if ( i1 != -1 ){
+		i1 = buf.indexOf("=", i1) + 1;
+		var i2 = buf.indexOf(";", i1);
+		return buf.substring(i1, i2);
+	}
+	
+	return 0;
+}
+
+</script>
+
+<style type="text/css"> 
+.noUi-connect{
+	background: #ccc;
+}
+
+#slider .noUi-handle{
+	background: #f2f2f2;
+	border-radius:75px;
+	-moz-border-radius:75px;
+	-webkit-border-radius: 75px;
+	-o-border-radius: 75px;
+	-ms-border-radius: 75px;
+	border:2px solid #cacaca;
+	width:28px;
+	top:-10px;
+	box-shadow:none;
+}
+
+.noUi-horizontal{
+	height: 10px;
+	top: 8px;
+}
+
+body{
+	overflow: hidden;
+	//position: fixed;
+	width: 100%;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	background-color:#808080;
+	margin:0px;
+}
+
+img{
+	-webkit-transform-origin: left top;
+	-moz-transform-origin: left top;
+	-ms-transform-origin: left top;
+	-o-transform-origin: left top;
+}
+
+canvas{
+	-webkit-transform-origin: left top;
+	-moz-transform-origin: left top;
+	-ms-transform-origin: left top;
+	-o-transform-origin: left top;
+}
+
+div.curtain{
+	position:absolute;
+	background-color:#808080;
+	height:100%;
+	width:0px;
+	top:0px;
+	left:0px;
+	z-index:4;
+}
+
+canvas.sukasi{
+	position:absolute;
+	filter:alpha(opacity=1);
+	-moz-opacity:0.03;
+	opacity:0.01;
+	z-index:1002;
+}
+
+div.loading_block{
+	z-index:15000;
+	position:absolute;
+	top:0px;
+	left:0px;
+	width: 200px;
+	height: 100px;
+	visibility:hidden;
+	font-size:11px;
+	text-align:center;
+	background: none repeat 0 0 #e9e9e9;
+	border: 1px solid #dddddd;
+	border-radius: 15px;
+	box-shadow: 0 0 20px 0 rgba(200, 200, 200, 0.5);
+	margin: 10px 0px;
+}
+
+p.loading_img{
+	background:url(https://img.papy.co.jp/viewer/img/load.gif) no-repeat center center transparent;
+	height: 30px;
+	margin: 12px 0;
+	width: 100%;
+}
+
+*{
+	margin: 0;
+	padding: 0;
+}
+
+ul{
+	list-style-type:none;
+}
+
+.clearfix:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+.bbox {
+	position:absolute;
+	top: 0;
+	box-shadow: 0 2px 5px #ccc;
+    background-color: rgba(255,255,255,0.95);
+	z-index: 6;
+	width: 100%;
+	height:50px;
+	font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ","Meiryo", sans-serif;
+	visibility:hidden;
+}
+
+#navi_head{
+	padding:8px 0;
+	height: 30px;
+}
+
+#zoom, #print, .slider_btn{
+	width: 75px;
+	height: 28px;
+	float:left;
+	text-align:center;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+	border-radius:5px;
+	margin-left: 5px;
+	padding:0 3px;
+}
+
+.btn_back_hidden{
+	filter:alpha(opacity=20);
+    -moz-opacity: 0.2;
+    opacity: 0.2;
+	cursor:default;
+}
+
+.btn_back_visible{
+	filter:alpha(opacity=100);
+    -moz-opacity: 1;
+    opacity: 1;
+	cursor:pointer;
+}
+
+.btn_back{
+	width: 40px;
+	height: 28px;
+	float:right;
+	text-align:center;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+	border-radius:5px;
+	margin-left: 5px;
+	padding:0 3px;
+}
+
+#zoom a, #print a, .slider_btn a, .btn_back a{
+	display:block;
+	font-weight: bold;
+	width:100%;
+	height:100%;
+	text-decoration:none;
+	background: #f9f9f9;
+	color: #313f52;
+	font-size:14px;
+	line-height:28px;
+	border: solid 1px #cacaca;
+	border-radius:5px;
+}
+
+#mokuji_block{
+	/*min-width:120px;
+	width:30%;*/
+	width:100%;
+	/*margin: 5px 0 5px 1%;*/
+	z-index:7;
+	float: left;
+	position: relative;
+}
+
+#mokuji{
+	width: 100%;
+	font-size: 14px;
+	height: 30px;
+	padding: 3px;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+	margin-bottom: 5px;
+	border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-webkit-appearance: none;
+	color: #313f52;
+	/*background: #eaeaea;*/
+	border: 1px solid #a9a9a9;
+	font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ","Meiryo", sans-serif;
+	cursor:pointer;
+}
+
+#mokuji_block:after {
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	content: "";
+	display: block;
+	border-top: 2px solid #313f52;
+	border-right: 2px solid #313f52;
+	width: 5px;
+	height: 5px;
+	transform: rotate(135deg);
+	-webkit-transform: rotate(135deg);
+}
+
+.close {
+	cursor:pointer;
+	color: #fff;
+	float: right;
+	margin: 15px 10px 5px 0;
+}
+
+@media print{
+  .viewer{display:none;}       /* 印刷しない */
+}
+@media screen{
+  .printer{display:none;}      /* 画面に表示しない */
+}
+
+
+#logo {
+	background: none;
+	float: left;
+	height: 30px;
+	width: 100px;
+	margin: 0 10px 0 20px;
+}
+.mokuji_block_wrap {
+	float:left; 
+	width:100px; 
+	height:30px;
+	margin-left: 5px;
+	margin-right:5px;
+}
+#slider_value {
+	float:right; 
+	line-height:30px; 
+	/*color:#FFF;*/
+	color: #313f52;
+	width: 80px;
+}
+.slider_wrap {
+	height: 30px;
+	overflow: hidden;
+	padding: 1px 20px 1px 25px;
+}
+
+.lock{
+	height:100% !important;
+	overflow:hidden;
+}
+
+#confirm_window_wrap{
+	position: absolute;
+	left:0;
+	z-index:101;
+	display:none;
+}
+
+#confirm_window{
+	z-index:100;
+	width:280px;
+	background-color:#fff;
+	position:absolute;
+	top:50%;
+	left:50%;
+	margin-left:-140px;
+	margin-top:-100px;
+	-webkit-border-radius: 8px;  
+	-moz-border-radius: 8px;  
+	border-radius: 8px; 
+	text-align:center;   
+	overflow:hidden;   
+}
+
+#confirm_window p{
+	margin:0 0 5px 0;
+	line-height:1.6;  
+}
+
+#confirm_window .choice{
+	display:inline-block;
+	overflow:hidden;
+	border-top:solid 1px #b3b3b3;
+	border-right:solid 1px #b3b3b3;        
+	color:#3377ff;        
+	width:50%;
+	line-height:40px;        
+	margin:5px -1px -3px 0px;
+}
+
+#black{
+	display:none;
+	width:100%;
+	height:100%;
+	background-color:#000;
+	z-index:5;
+	position:absolute;
+	top:0;
+	left:0;
+	filter:alpha(opacity=50);
+	-moz-opacity:0.5;
+	opacity:0.5;
+}
+
+</style>
+
+
+<body onContextmenu="return false;" oncopy="return false;">
+<span class="viewer" id="viewer">
+	<!--画像本体-->
+	<div id="view" style="overflow:hidden"></div>
+
+	<div id="black"></div>
+	<div id="confirm_window_wrap">
+		<div id="confirm_window">
+			<div style="padding:10px;">
+				<p id="host_name"></p>
+				<p>サイトに戻ります。<br>よろしいですか。</p>
+			</div>
+			<div onclick="f_confirm_ng()" class="choice" style="cursor:pointer;">キャンセル</div><!--
+			--><div onclick="f_confirm_ok()" class="choice" style="font-weight:bold; cursor:pointer;">OK</div>
+		</div>
+	</div>
+	
+	<div id="loading_block" class="loading_block">
+		<p class="loading_img"></p>
+		<span id="loading">画像取得中です…<br>少々お待ち下さい</span>
+	</div>
+
+	<div class="bbox" id="page_bar" style="visibility:visible;">
+		<div class="clearfix" id="navi_head">
+			<!--<li style="left:0;"><a href="javascript: void(0);" id="btn_end" onclick="end_view(); return false;">閲覧終了</a></li>-->
+			<a href="javascript: void(0);" id="logo" onclick="go_home();"><img src="https://img.papy.co.jp/renta/img/logo/renta_logo_pc.png" id="logo_img" width="100%"></a>
+			<div id="print"><a href="javascript: void(0);" id="print_a" onclick="f_print(); return false;">印刷</a></div>
+			<div id="zoom"><a href="javascript: void(0);" id="zoom_a" onclick="f_zoom(0); return false;">-縮小</a></div>
+			<div id="zoom"><a href="javascript: void(0);" id="zoom_a" onclick="f_zoom(1); return false;">+拡大</a></div>
+			<div class="slider_btn"><a id="left_btn" href="javascript:;" onclick="left_btn();">&#x25C0; 進む</a></div>
+			<div class="slider_btn"><a id="right_btn" href="javascript:;" onclick="right_btn();">戻る &#x25B6;</a></div>
+			<div href="javascript:;" onclick="show_menue();" style="padding:5px; padding-left:10px; line-height:18px; float:right; margin-right:10px; cursor:pointer; font-size:18px;">×</div>
+			<div class="btn_back"><a href="javascript:;" onclick="f_page_back();" id="btn_back"><img src="https://img.papy.co.jp/viewer/img/return.png" width="20px" height="20px" style="padding:5px;"></a></div>
+			<div class="mokuji_block_wrap"><div id="mokuji_block"></div></div>
+			<div id="slider_value"></div>
+			<div class="slider_wrap"><div id="slider"></div></div>
+		</div>
+	</div>
+	
+
+	<!--サイド、もしくは上下の余り部分-->
+	<div id="side_left" class="curtain"></div>
+	<div id="side_right" class="curtain"></div>
+	
+	<!--透かし画像-->
+	<canvas id="sukasi0" class="sukasi" width="0" height="16" style="left:0px;"></canvas>
+	<canvas id="sukasi1" class="sukasi" width="0" height="16" style="right:0px;"></canvas>
+	<canvas id="sukasi2" class="sukasi" width="0" height="16" style="left:0px;"></canvas>
+	<canvas id="sukasi3" class="sukasi" width="0" height="16" style="right:0px;"></canvas>
+	<canvas id="sukasi4" class="sukasi" width="0" height="16" style="left:0px;"></canvas>
+	<canvas id="sukasi5" class="sukasi" width="0" height="16" style="right:0px;"></canvas>
+	
+</span>
+
+<span id="printer" class="printer">
+	<div id="div_view1" style="text-align:center; page-break-after:always;">
+		<canvas id="view1"></canvas>
+	</div>
+	<div id="div_view2" style="text-align:center;">
+		<canvas id="view2"></canvas>
+	</div>
+</span>
+
+</body>
+</html>

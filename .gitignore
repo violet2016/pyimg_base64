@@ -2,3 +2,5 @@
 *.zip
 *.har
 .DS_Store
+*.pyc
+.vscode

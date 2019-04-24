@@ -44,8 +44,6 @@ def onePage(fname, prd_ser):
     w, h = splitRecover(fname)
     dirname = fname.split('/')[-1]
     didx = getCord(dirname, prd_ser, h, w)
-    if dirname == '7':
-        print(didx)
     generateImage(dirname, h, w, didx)
     shutil.rmtree('./'+dirname)
 
@@ -53,4 +51,3 @@ if __name__ == "__main__":
     fname = sys.argv[1]
     prd_ser = sys.argv[2]
     onePage(fname, prd_ser)
-    

@@ -5,8 +5,6 @@ max_loop = 20
 x = 7
 y = 7
 
-width = 120
-height = 171
 def f_shuffle_r(ar_number,snum,x_idx,y):
     gn = kn = int(y/2)
     if y%2 != 0:
@@ -58,6 +56,8 @@ def f_shuffle_r(ar_number,snum,x_idx,y):
 def getCord(tmp_page, prd_ser, o_height, o_width):
     diff_w = o_width%x
     diff_h = o_height%y
+    width = int(o_width/x)
+    height = int(o_height/y)
     cnt = 0
     ar_number = [[None for i in range(y)] for j in range(x)]
     for i in range(y):

@@ -10,4 +10,5 @@ if __name__ == "__main__":
         os.mkdir('result')
     for f in files:
         onePage(f, prd_ser)
+    print('total pages', len(files))
         

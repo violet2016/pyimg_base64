@@ -4,11 +4,19 @@ import shutil
 from PIL import Image
 from get_cord import getCord
 pHeight = 171
+
 def splitRecover(octetFile):
+    print("octed file: ", octetFile)
     f = open(octetFile, "rb")
     fstr = f.read()
-    width = int(fstr[9:12])
-    height = int(fstr[13:17])
+    print(fstr[0:50])
+    try:
+        width = int(fstr[9:12])
+        height = int(fstr[13:17])
+    except Exception:
+        width = int(fstr[9:13])
+        height = int(fstr[14:18])
+    print(width, height)
     prefix = b'\xff\xd8\xff\xe0\x00'
     fend = octetFile.split('/')[-1]
 
@@ -42,6 +50,8 @@ def onePage(fname, prd_ser):
         print(fname, 'size is 0')
         return
     w, h = splitRecover(fname)
+    if w < 0:
+        return
     dirname = fname.split('/')[-1]
     didx = getCord(dirname, prd_ser, h, w)
     generateImage(dirname, h, w, didx)

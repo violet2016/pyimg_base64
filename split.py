@@ -1,4 +1,5 @@
 import base64
+from logging import exception
 import sys, os
 import shutil
 from PIL import Image
@@ -20,7 +21,11 @@ def splitRecover(octetFile):
     prefix = b'\xff\xd8\xff\xe0\x00'
     fend = octetFile.split('/')[-1]
 
-    os.mkdir(fend)
+    try:
+        os.mkdir(fend)
+    except Exception as e:
+        print(str(e))
+        pass 
     strs = fstr.split(prefix)
     for idx, i in enumerate(strs):
         if idx == 0:
@@ -28,7 +33,9 @@ def splitRecover(octetFile):
         encodedZip = base64.b64encode(prefix+i)
         b64str = encodedZip.decode()
         jpgdata = base64.b64decode(b64str)
-        g = open(fend+'/'+str(idx)+'.jpg', "wb")
+        jpgfile = fend+'/'+str(idx)+'.jpg'
+        #print(jpgfile)
+        g = open(jpgfile, "wb")
         g.write(jpgdata)
         g.close()
     return width, height
@@ -37,8 +44,12 @@ def generateImage(dirname, height, width, didx):
     path = './'+dirname+'/'
 
     for i in range(3,52):
-        img = Image.open(path+str(i)+'.jpg')
-        result.paste(img, (didx[i-3][0], didx[i-3][1]))
+        try:
+            img = Image.open(path+str(i)+'.jpg')
+            result.paste(img, (didx[i-3][0], didx[i-3][1]))
+        except Exception as e:
+            print(str(e))
+            pass
     img_1 = Image.open(path+'1.jpg')
     result.paste(img_1, (0, 0))
     img_2 = Image.open(path+'2.jpg')
@@ -54,6 +65,7 @@ def onePage(fname, prd_ser):
         return
     dirname = fname.split('/')[-1]
     didx = getCord(dirname, prd_ser, h, w)
+    #print(dirname)
     generateImage(dirname, h, w, didx)
     shutil.rmtree('./'+dirname)
 
